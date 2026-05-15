@@ -1,5 +1,13 @@
 # Changelog
 
+## Router Initialization Hardening
+
+- Added `.codex/team-kit.toml` for `docs_root`, truth-source paths, public file locks, and install modes.
+- Updated initialization flow to probe target projects before copying, avoid `Docs`/`docs` drift, and prevent duplicate project spec/progress truth sources.
+- Added minimal, team-ready, and full initialization modes.
+- Strengthened Team route gating: Delegation Card first, wait for all subagents, then public file updates.
+- Made the integrity check configuration-driven and added checks for `.DS_Store`, duplicate truth sources, path drift, work-log headings, and cross-project absolute paths.
+
 ## Initial Router Release
 
 - Reworked `AGENTS.md` as a Router Only entrypoint.

@@ -11,10 +11,11 @@
 https://github.com/ZainDarcy/codex-team-kit-router
 
 要求：
-1. 合并模板，不要覆盖我已有的 AGENTS.md、AGENT.md、项目规范和项目进度。
-2. 按我的项目语言习惯随机给团队成员起真实人名。
-3. 初始化团队名册和成员档案。
-4. 初始化后运行模板体检，并汇报改了哪些文件。
+1. 先探测目标项目已有 AGENTS.md、AGENT.md、docs/Docs、项目规范、项目进度和 .codex/，不要直接覆盖。
+2. 在 .codex/team-kit.toml 里确定 docs_root、项目规范、项目进度、团队目录和公共文件清单。
+3. 选择初始化模式；默认用团队就绪模式。
+4. 按我的项目语言习惯随机给团队成员起真实人名，并初始化团队名册和成员档案。
+5. 初始化后运行模板体检，并汇报真相源、改动文件和未生成/未迁移的内容。
 ```
 
 AI 接入后，普通任务可以直接对 Codex 说：
@@ -50,6 +51,7 @@ AI 接入后，普通任务可以直接对 Codex 说：
 └── .codex/
     ├── agents/
     ├── team/
+    ├── team-kit.toml
     └── tools/
 ```
 
@@ -57,16 +59,24 @@ AI 接入后，普通任务可以直接对 Codex 说：
 
 如果目标项目已经有 `AGENTS.md`、`AGENT.md`、项目进度或项目规范，不要整目录覆盖，按合并方式接入：
 
-1. 先盘点现有 `AGENTS.md`、`AGENT.md`、项目进度、项目规范、`.codex/` 和已有 AI 工作流文档。
+1. 先盘点现有 `AGENTS.md`、`AGENT.md`、项目进度、项目规范、`.codex/`、`docs/Docs` 大小写和已有 AI 工作流文档。
 2. 官方入口优先使用 `AGENTS.md`。如果项目只有 `AGENT.md`，新建瘦 `AGENTS.md`，并把旧 `AGENT.md` 作为按需读取的历史/团队手册。
-3. 保留现有项目进度和项目规范；如果采用本模板结构，再合并到 `Docs/01-项目/`，只追加路由、公共文件锁、子代理派发和验证相关段落。
-4. 如果已有 `.codex/`，逐项合并 `.codex/agents/`、`.codex/team/` 和 `.codex/tools/check_template_integrity.py`；不要直接覆盖 `.codex/config.toml`。
-5. 执行 `Docs/03-团队/Agents/团队初始化.md`：按目标项目语言随机起真实人名，创建团队名册和成员档案。
-6. 合并后运行本地模板体检；如果需要确认官方行为，先查当前 OpenAI Codex 官方文档。
+3. 保留现有项目进度和项目规范；先确定唯一真相源，不创建内容重复的桥接副本，必要时只创建索引页。
+4. 更新 `.codex/team-kit.toml`，把 `docs_root`、项目规范、项目进度、团队目录和公共文件清单渲染成目标项目的实际路径。
+5. 如果已有 `.codex/`，逐项合并 `.codex/agents/`、`.codex/team/` 和 `.codex/tools/check_template_integrity.py`；不要直接覆盖 `.codex/config.toml`。
+6. 执行 `Docs/03-团队/Agents/团队初始化.md`：按目标项目语言随机起真实人名，创建团队名册和成员档案。
+7. 合并后运行本地模板体检；如果需要确认官方行为，先查当前 OpenAI Codex 官方文档。
+
+## 初始化模式
+
+- 最小模式：只接入 Router、公共文件写锁、派发协议、核心 agents 和体检脚本；第一次 Team 路由前再创建成员档案和工作记录目录。
+- 团队就绪模式：推荐默认。初始化时随机起名并创建团队名册和成员档案，不创建虚假的初始工作记录。
+- 完整模式：在团队就绪模式基础上保留交付模板，适合长期团队沉淀。
 
 ## 核心约定
 
 - `AGENTS.md` 是 Codex 主线程瘦入口，只保留路由和硬规则。
+- `.codex/team-kit.toml` 是目标项目路径、真相源和公共文件清单的配置源。
 - `Docs/README.md` 是文档目录导航。
 - `Docs/02-执行/AI执行手册.md` 记录执行前判断、子代理派发、验证和交付规则。
 - `Docs/02-执行/工程结构与文档路由.md` 记录 Quick / Project / Team / Review / Agent-Setup 五类路由。

@@ -5,6 +5,7 @@
 ## 常驻规则
 
 - 先判断任务路由，再按需读取文档；不要在每个任务开始时一次性读取全部 `Docs/` 和 `.codex/team/`。
+- 目标项目的文档根目录、真相源和公共文件清单以 `.codex/team-kit.toml` 为准；不要混写 `Docs/` 和 `docs/`。
 - 用户明确要求“只规划”“只测评”“不改代码”时，不得擅自实现。
 - 只有用户明确要求“子代理”“并行 agent”“团队流程”或“允许使用子代理”时，主线程才派发子代理。
 - 主线程负责需求理解、路由选择、子代理派发、结果整合、公共文件更新和最终交付。
@@ -17,7 +18,7 @@
 | --- | --- | --- |
 | `Quick` | 简单问答、小范围检查、无需改动的快速判断 | 本文件和用户点名文件 |
 | `Project` | 普通规划、实现、文档更新、局部修复 | `Docs/01-项目/项目规范.md`、`Docs/01-项目/项目进度.md`、`Docs/02-执行/AI执行手册.md` |
-| `Team` | 用户明确要求团队流程、子代理、并行 agent | `Docs/03-团队/开发团队.md`、`Docs/02-执行/AI执行手册.md`、`.codex/team/dispatch-protocol.md`、`.codex/team/model-routing.md`、`.codex/team/public-file-lock.md` |
+| `Team` | 用户明确要求团队流程、子代理、并行 agent | `Docs/03-团队/Agents/团队初始化.md`、`Docs/03-团队/开发团队.md`、`Docs/02-执行/AI执行手册.md`、`.codex/team/dispatch-protocol.md`、`.codex/team/model-routing.md`、`.codex/team/public-file-lock.md` |
 | `Review` | 审查、QA、安全、回归、验收 | `Docs/02-执行/AI执行手册.md`、`.codex/team/public-file-lock.md`、`Docs/03-团队/Agents/交付模板/QA验收模板.md` |
 | `Agent-Setup` | 搭建、扩展、调整团队模板或 agent 定义 | `Docs/03-团队/开发团队.md`、`Docs/02-执行/工程结构与文档路由.md`、`.codex/team/role-taxonomy.md`、`.codex/team/model-routing.md`、`.codex/team/public-file-lock.md`、`.codex/team/spawn-prompt-templates.md`、`.codex/agents/*.toml` |
 
@@ -32,6 +33,7 @@
 - `Docs/02-执行/AI执行手册.md`
 - `Docs/02-执行/工程结构与文档路由.md`
 - `.codex/config.toml`
+- `.codex/team-kit.toml`
 - `.codex/agents/*.toml`
 - `.codex/team/*.md`
 

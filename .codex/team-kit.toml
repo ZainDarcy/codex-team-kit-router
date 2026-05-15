@@ -1,0 +1,62 @@
+[kit]
+name = "codex-team-kit-router"
+version = "0.4"
+default_install_mode = "team-ready"
+
+[paths]
+docs_root = "Docs"
+project_spec = "Docs/01-项目/项目规范.md"
+project_progress = "Docs/01-项目/项目进度.md"
+execution_manual = "Docs/02-执行/AI执行手册.md"
+routing_doc = "Docs/02-执行/工程结构与文档路由.md"
+team_doc = "Docs/03-团队/开发团队.md"
+agent_root = "Docs/03-团队/Agents"
+team_init = "Docs/03-团队/Agents/团队初始化.md"
+team_roster = "Docs/03-团队/Agents/团队名册.md"
+member_profile_template = "Docs/03-团队/Agents/成员档案/_成员档案模板.md"
+work_log_template = "Docs/03-团队/Agents/工作记录/_工作记录模板.md"
+
+[install_modes]
+minimal = "只接入 Router、公共文件写锁、派发协议、核心 agents 和体检脚本；第一次 Team 路由前再初始化成员档案。"
+team_ready = "推荐模式。接入 Router 和核心团队，并立即随机起名、创建团队名册和成员档案；不创建虚假的初始工作记录。"
+full = "在 team_ready 基础上保留全部交付模板，适合明确要长期团队沉淀的项目。"
+
+[truth_sources]
+project_spec_candidates = [
+  "项目规范.md",
+  "Docs/项目规范.md",
+  "Docs/01-项目/项目规范.md",
+  "docs/项目规范.md",
+  "docs/01-项目/项目规范.md",
+]
+project_progress_candidates = [
+  "项目进度.md",
+  "Docs/项目进度.md",
+  "Docs/01-项目/项目进度.md",
+  "docs/项目进度.md",
+  "docs/01-项目/项目进度.md",
+]
+
+[public_files]
+paths = [
+  "AGENTS.md",
+  ".codex/config.toml",
+  ".codex/team-kit.toml",
+  "Docs/01-项目/项目规范.md",
+  "Docs/01-项目/项目进度.md",
+  "Docs/02-执行/AI执行手册.md",
+  "Docs/02-执行/工程结构与文档路由.md",
+  "Docs/03-团队/开发团队.md",
+]
+globs = [
+  ".codex/agents/*.toml",
+  ".codex/team/*.md",
+]
+
+[checks]
+max_agents_md_lines = 150
+forbidden_absolute_path_fragments = [
+  "/Users/",
+  "/home/",
+  "C:\\Users\\",
+]

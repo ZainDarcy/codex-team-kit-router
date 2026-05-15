@@ -9,6 +9,7 @@
 - `Docs/02-执行/AI执行手册.md`
 - `Docs/02-执行/工程结构与文档路由.md`
 - `.codex/config.toml`
+- `.codex/team-kit.toml`
 - `.codex/agents/*.toml`
 - `.codex/team/*.md`
 
@@ -27,6 +28,7 @@
 - 不修改其他子代理的成员档案。
 - 不创建或修改 `.codex/agents/*.toml`。
 - 不修改 `.codex/config.toml`。
+- 不修改 `.codex/team-kit.toml`。
 - 不启动下一层子代理。
 
 ## 建议回写机制

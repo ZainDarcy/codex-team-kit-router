@@ -22,6 +22,7 @@
 - Docs/02-执行/AI执行手册.md
 - Docs/02-执行/工程结构与文档路由.md
 - .codex/config.toml
+- .codex/team-kit.toml
 - .codex/agents/*.toml
 - .codex/team/*.md
 
