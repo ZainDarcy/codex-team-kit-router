@@ -26,6 +26,8 @@ REQUIRED_PATHS = [
     "Docs/03-团队/开发团队.md",
     "Docs/02-执行/AI执行手册.md",
     "Docs/02-执行/工程结构与文档路由.md",
+    "Docs/03-团队/Agents/团队初始化.md",
+    "Docs/03-团队/Agents/团队名册.md",
     "Docs/03-团队/Agents/成员档案/_成员档案模板.md",
     "Docs/03-团队/Agents/工作记录/_工作记录模板.md",
     "Docs/03-团队/Agents/交付模板/策划交付模板.md",
@@ -152,6 +154,8 @@ def check_agents() -> None:
 
     for agent_file in agent_files:
         text = agent_file.read_text(encoding="utf-8")
+        if "localized_nickname" in text:
+            fail(f"{agent_file.relative_to(ROOT)} should keep localized naming policy in Docs, not custom TOML fields")
         for field in LOCAL_AGENT_REQUIRED_FIELDS:
             if field not in text:
                 fail(f"{agent_file.relative_to(ROOT)} missing local template field: {field}")
@@ -191,6 +195,16 @@ def check_team_docs() -> None:
     for route in ROUTES:
         if route not in routing_doc:
             fail(f"Docs/02-执行/工程结构与文档路由.md missing route: {route}")
+
+    init_doc = (ROOT / "Docs/03-团队/Agents/团队初始化.md").read_text(encoding="utf-8")
+    for phrase in ["GitHub 地址", "随机生成", "真实团队成员的人名", "不使用本模板文档中的示例名作为固定输出"]:
+        if phrase not in init_doc:
+            fail(f"Docs/03-团队/Agents/团队初始化.md missing phrase: {phrase}")
+
+    roster = (ROOT / "Docs/03-团队/Agents/团队名册.md").read_text(encoding="utf-8")
+    for phrase in ["状态：pending", "待随机生成", "初始化时由 AI 随机起名并建档"]:
+        if phrase not in roster:
+            fail(f"Docs/03-团队/Agents/团队名册.md missing initialization phrase: {phrase}")
 
     dispatch = (ROOT / ".codex/team/dispatch-protocol.md").read_text(encoding="utf-8")
     for phrase in DISPATCH_PHRASES:
