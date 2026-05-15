@@ -24,7 +24,10 @@
 - .codex/config.toml
 - .codex/team-kit.toml
 - .codex/agents/*.toml
+- .codex/agent-packs/**/*.toml
+- .codex/agent-packs/**/*.md
 - .codex/team/*.md
+- Docs/03-团队/行业扩展包/*.md
 
 交付物：
 {deliverables}

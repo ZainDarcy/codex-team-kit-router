@@ -1,6 +1,6 @@
 # codex-team-kit-router
 
-把本目录内的文件合并到目标项目根目录后，即可获得一套路由式 Codex 子代理团队模板。新版采用瘦 `AGENTS.md` 入口，详细规则按任务路由到 `Docs/` 和 `.codex/team/`，避免主线程一开始就被过多上下文塞满。
+本仓库是路由式 Codex 子代理团队模板源。接入目标项目时，不要把仓库直接拉取到项目根目录，也不要把模板仓库作为项目子目录长期保留；AI 应先拉到临时 staging 目录，探测目标项目后按清单合并，完成体检后删除 staging。新版采用瘦 `AGENTS.md` 入口，详细规则按任务路由到 `Docs/` 和 `.codex/team/`，避免主线程一开始就被过多上下文塞满。
 
 ## 使用方式
 
@@ -11,11 +11,13 @@
 https://github.com/ZainDarcy/codex-team-kit-router
 
 要求：
-1. 先探测目标项目已有 AGENTS.md、AGENT.md、docs/Docs、项目规范、项目进度和 .codex/，不要直接覆盖。
-2. 在 .codex/team-kit.toml 里确定 docs_root、项目规范、项目进度、团队目录和公共文件清单。
-3. 选择初始化模式；默认用团队就绪模式。
-4. 按我的项目语言习惯随机给团队成员起真实人名，并初始化团队名册和成员档案。
-5. 初始化后运行模板体检，并汇报真相源、改动文件和未生成/未迁移的内容。
+1. 不要把模板仓库直接拉到项目根目录；先新建临时 staging 目录拉取模板，优先放在项目根目录外。
+2. 先探测目标项目已有 AGENTS.md、AGENT.md、docs/Docs、项目规范、项目进度和 .codex/，不要直接覆盖。
+3. 在 .codex/team-kit.toml 里确定 docs_root、项目规范、项目进度、团队目录、公共文件清单和 staging 策略。
+4. 选择初始化模式；默认用团队就绪模式。
+5. 必须选择行业扩展包：none、game-basic、game-full 或 custom；不要默认偷偷加入。
+6. 按我的项目语言习惯随机给团队成员起真实人名，并初始化团队名册和成员档案。
+7. 按合并清单把需要的文件融入项目，运行模板体检，删除 staging 目录，再汇报真相源、改动文件、未生成/未迁移内容和 staging 清理结果。
 ```
 
 AI 接入后，普通任务可以直接对 Codex 说：
@@ -50,6 +52,7 @@ AI 接入后，普通任务可以直接对 Codex 说：
 │   └── 03-团队/
 └── .codex/
     ├── agents/
+    ├── agent-packs/
     ├── team/
     ├── team-kit.toml
     └── tools/
@@ -59,13 +62,23 @@ AI 接入后，普通任务可以直接对 Codex 说：
 
 如果目标项目已经有 `AGENTS.md`、`AGENT.md`、项目进度或项目规范，不要整目录覆盖，按合并方式接入：
 
-1. 先盘点现有 `AGENTS.md`、`AGENT.md`、项目进度、项目规范、`.codex/`、`docs/Docs` 大小写和已有 AI 工作流文档。
-2. 官方入口优先使用 `AGENTS.md`。如果项目只有 `AGENT.md`，新建瘦 `AGENTS.md`，并把旧 `AGENT.md` 作为按需读取的历史/团队手册。
-3. 保留现有项目进度和项目规范；先确定唯一真相源，不创建内容重复的桥接副本，必要时只创建索引页。
-4. 更新 `.codex/team-kit.toml`，把 `docs_root`、项目规范、项目进度、团队目录和公共文件清单渲染成目标项目的实际路径。
-5. 如果已有 `.codex/`，逐项合并 `.codex/agents/`、`.codex/team/` 和 `.codex/tools/check_template_integrity.py`；不要直接覆盖 `.codex/config.toml`。
-6. 执行 `Docs/03-团队/Agents/团队初始化.md`：按目标项目语言随机起真实人名，创建团队名册和成员档案。
-7. 合并后运行本地模板体检；如果需要确认官方行为，先查当前 OpenAI Codex 官方文档。
+1. 先在临时 staging 目录拉取模板。优先使用项目根目录外的临时目录；如果权限不允许，可用项目内 `_codex-team-kit-router-staging/`，但必须加入 `.gitignore` 并在完成后删除。
+2. 盘点现有 `AGENTS.md`、`AGENT.md`、项目进度、项目规范、`.codex/`、`docs/Docs` 大小写和已有 AI 工作流文档。
+3. 官方入口优先使用 `AGENTS.md`。如果项目只有 `AGENT.md`，新建瘦 `AGENTS.md`，并把旧 `AGENT.md` 作为按需读取的历史/团队手册。
+4. 保留现有项目进度和项目规范；先确定唯一真相源，不创建内容重复的桥接副本，必要时只创建索引页。
+5. 更新 `.codex/team-kit.toml`，把 `docs_root`、项目规范、项目进度、团队目录、公共文件清单和 staging 策略渲染成目标项目的实际路径。
+6. 如果已有 `.codex/`，逐项合并 `.codex/agents/`、`.codex/team/` 和 `.codex/tools/check_template_integrity.py`；不要直接覆盖 `.codex/config.toml`。
+7. 选择行业扩展包。未选择的 `.codex/agent-packs/` 不复制进 `.codex/agents/`，只作为 staging 中的模板源。
+8. 执行 `Docs/03-团队/Agents/团队初始化.md`：按目标项目语言随机起真实人名，创建团队名册和成员档案。
+9. 合并后运行本地模板体检，确认 staging 目录已删除；如果需要确认官方行为，先查当前 OpenAI Codex 官方文档。
+
+## Staging 接入规则
+
+- 禁止把 `codex-team-kit-router/` 直接 clone 到目标项目根目录并长期保留。
+- 禁止在目标项目根目录做整目录覆盖式复制。
+- AI 必须先在 staging 目录中读取模板、做对照和生成合并清单。
+- 合并到目标项目时，只落盘被选择的文件和被选择的行业扩展 agents。
+- 完成后必须删除 staging 目录；如果删除失败，最终汇报必须列出残留路径和原因。
 
 ## 初始化模式
 
@@ -81,6 +94,7 @@ AI 接入后，普通任务可以直接对 Codex 说：
 - `Docs/02-执行/AI执行手册.md` 记录执行前判断、子代理派发、验证和交付规则。
 - `Docs/02-执行/工程结构与文档路由.md` 记录 Quick / Project / Team / Review / Agent-Setup 五类路由。
 - `.codex/agents/*.toml` 是项目级 custom subagents。
+- `.codex/agent-packs/` 是可选行业扩展包模板源，初始化选择后才把被选中的 agents 合并进 `.codex/agents/`。
 - `Docs/03-团队/开发团队.md` 记录团队结构、协作关系和验收门禁。
 - 公共文件只由 Codex 主线程修改。
 - 团队成员人名由目标项目里的 AI 初始化时随机生成，模板不固定默认姓名。

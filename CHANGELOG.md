@@ -1,5 +1,13 @@
 # Changelog
 
+## Industry Packs And Staging Init
+
+- Added a required staging-based initialization protocol: clone/download the template into a temporary staging directory, merge selected files into the target project, then delete staging.
+- Added `.codex/agent-packs/` as the template source for optional industry agents.
+- Added the first optional industry pack for games, with `game-basic`, `game-full`, `custom`, and `none` choices.
+- Expanded game roles into planning, engineering, art, and validation groups, including combat design, balance design, UI engineering, UI art, and playtest research.
+- Updated integrity checks to validate industry pack structure, required industry-pack selection, staging cleanup rules, and public-lock synchronization.
+
 ## Router Initialization Hardening
 
 - Added `.codex/team-kit.toml` for `docs_root`, truth-source paths, public file locks, and install modes.

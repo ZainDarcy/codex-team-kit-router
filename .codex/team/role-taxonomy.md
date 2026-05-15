@@ -14,9 +14,14 @@
 
 ## 领域扩展
 
+行业扩展优先做成 `.codex/agent-packs/{industry}/` 下的可选包，初始化时选择后再复制到 `.codex/agents/`。不要把所有行业 agents 默认塞进每个项目。
+
 | 领域 | 推荐新增角色 |
 | --- | --- |
-| 游戏 | game_designer, gameplay_engineer, ui_artist, technical_artist, playtest_researcher |
+| 游戏策划 | game_designer, combat_designer, balance_designer, level_designer |
+| 游戏程序 | gameplay_engineer, ui_engineer |
+| 游戏美术 | game_art_director, ui_artist, technical_artist |
+| 游戏验证 | playtest_researcher |
 | Web/SaaS | frontend_engineer, backend_engineer, devops_engineer, data_analyst |
 | App | mobile_engineer, release_manager, platform_integrator |
 | AI/Data | data_engineer, ml_engineer, evaluation_engineer, mlops_engineer |
@@ -28,4 +33,4 @@
 - 新角色必须有清晰边界。
 - 新角色 TOML 必须禁止修改公共文件。
 - 新角色必须写工作记录。
-
+- 新行业角色先放入扩展包模板源；只有初始化明确选择后，才进入 `.codex/agents/`、团队名册和成员档案。

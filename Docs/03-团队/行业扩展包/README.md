@@ -1,0 +1,40 @@
+# 行业扩展包
+
+行业扩展包用于把通用核心小队扩展成某个行业的专业团队。扩展包默认不生效，初始化时必须显式选择。
+
+## 初始化选择
+
+主线程初始化时必须输出一段 `行业扩展包选择`：
+
+- `none`：不加入任何行业扩展包。
+- `game-basic`：加入游戏基础小队。
+- `game-full`：加入游戏完整小队。
+- `custom`：按行业、分组或单个 agent 选择。
+
+如果用户没有说明行业扩展包，但项目类型明显属于某个行业，主线程可以给推荐方案；是否加入仍必须在初始化报告中明确写出。
+
+## 当前可选包
+
+| 行业包 | 目录 | 选择项 | 说明 |
+| --- | --- | --- | --- |
+| 游戏 | `.codex/agent-packs/game/` | `none` / `game-basic` / `game-full` / `custom` | 覆盖策划、程序、美术和验证分组 |
+
+## 游戏包分组
+
+| 分组 | Agents | 说明 |
+| --- | --- | --- |
+| 策划 | `game_designer`, `combat_designer`, `balance_designer`, `level_designer` | 核心玩法、战斗、数值、关卡 |
+| 程序 | `gameplay_engineer`, `ui_engineer` | 玩法系统、UI/HUD 和运行时实现 |
+| 美术 | `game_art_director`, `ui_artist`, `technical_artist` | 美术方向、UI 视觉、资产接入和技术美术 |
+| 验证 | `playtest_researcher` | 可玩性、手感、节奏和玩家反馈 |
+
+## 生效方式
+
+1. 初始化时记录选择结果。
+2. 从 `.codex/agent-packs/{pack}/` 复制被选中的 `.toml` 到 `.codex/agents/`。
+3. 为每个新增 agent 随机生成目标项目语言下的真实人名。
+4. 更新 `Docs/03-团队/Agents/团队名册.md`。
+5. 创建对应成员档案。
+
+未选择的扩展包只作为模板源保留，不进入团队名册，不创建成员档案，不参与默认派发。
+

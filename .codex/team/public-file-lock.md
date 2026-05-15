@@ -11,7 +11,10 @@
 - `.codex/config.toml`
 - `.codex/team-kit.toml`
 - `.codex/agents/*.toml`
+- `.codex/agent-packs/**/*.toml`
+- `.codex/agent-packs/**/*.md`
 - `.codex/team/*.md`
+- `Docs/03-团队/行业扩展包/*.md`
 
 ## 子代理可以写的文件
 
@@ -27,6 +30,7 @@
 - 不修改其他子代理的工作记录。
 - 不修改其他子代理的成员档案。
 - 不创建或修改 `.codex/agents/*.toml`。
+- 不创建或修改 `.codex/agent-packs/` 中的扩展包模板。
 - 不修改 `.codex/config.toml`。
 - 不修改 `.codex/team-kit.toml`。
 - 不启动下一层子代理。

@@ -31,7 +31,26 @@ DISPATCH_PHRASES = [
     "所有本波子代理状态",
 ]
 
-WRITING_AGENTS = {"implementation_engineer", "docs_keeper"}
+WRITING_AGENTS = {
+    "implementation_engineer",
+    "docs_keeper",
+    "gameplay_engineer",
+    "ui_engineer",
+    "technical_artist",
+}
+
+GAME_PACK_AGENTS = [
+    "balance-designer.toml",
+    "combat-designer.toml",
+    "game-art-director.toml",
+    "game-designer.toml",
+    "gameplay-engineer.toml",
+    "level-designer.toml",
+    "playtest-researcher.toml",
+    "technical-artist.toml",
+    "ui-artist.toml",
+    "ui-engineer.toml",
+]
 
 LOCAL_AGENT_REQUIRED_FIELDS = [
     "name",
@@ -45,6 +64,9 @@ PUBLIC_LOCK_PHRASES = [
     "Docs/02-执行/AI执行手册.md",
     "Docs/02-执行/工程结构与文档路由.md",
     ".codex/agents/*.toml",
+    ".codex/agent-packs/**/*.toml",
+    ".codex/agent-packs/**/*.md",
+    "Docs/03-团队/行业扩展包/*.md",
     "Do not spawn subagents",
     "Docs/03-团队/Agents/工作记录",
 ]
@@ -172,6 +194,8 @@ def required_paths() -> list[str]:
         ".codex/team/public-file-lock.md",
         ".codex/team/role-taxonomy.md",
         ".codex/team/spawn-prompt-templates.md",
+        ".codex/agent-packs/README.md",
+        "Docs/03-团队/行业扩展包/README.md",
         cfg_path("project_spec"),
         cfg_path("project_progress"),
         cfg_path("execution_manual"),
@@ -186,6 +210,13 @@ def required_paths() -> list[str]:
     mode = cfg("kit", "default_install_mode", "team-ready")
     if mode in {"team-ready", "full"}:
         required.append(cfg_path("agent_root"))
+    for pack in CONFIG.get("industry_packs", {}).get("available", []):
+        required.extend(
+            [
+                f".codex/agent-packs/{pack}/README.md",
+                f".codex/agent-packs/{pack}/pack.toml",
+            ]
+        )
     if mode == "full":
         required.extend(
             [
@@ -237,6 +268,19 @@ def check_no_ds_store() -> None:
     matches = sorted(path.relative_to(ROOT) for path in ROOT.rglob(".DS_Store"))
     if matches:
         fail("Template must not contain .DS_Store: " + ", ".join(str(path) for path in matches))
+
+
+def check_no_forbidden_staging_dirs() -> None:
+    forbidden = CONFIG.get("staging", {}).get("forbidden_final_dirs", [])
+    if not isinstance(forbidden, list):
+        fail(".codex/team-kit.toml [staging].forbidden_final_dirs must be a list")
+    matches = []
+    for name in forbidden:
+        candidate = ROOT / str(name)
+        if candidate.exists() and candidate.resolve() != ROOT.resolve():
+            matches.append(str(candidate.relative_to(ROOT)))
+    if matches:
+        fail("Template must not contain leftover staging dirs: " + ", ".join(matches))
 
 
 def text_files() -> list[Path]:
@@ -316,6 +360,34 @@ def read_toml_string(text: str, field: str) -> str | None:
     return None
 
 
+def check_agent_file(agent_file: Path) -> None:
+    text = agent_file.read_text(encoding="utf-8")
+    if "localized_nickname" in text:
+        fail(f"{agent_file.relative_to(ROOT)} should keep localized naming policy in Docs, not custom TOML fields")
+    for field in LOCAL_AGENT_REQUIRED_FIELDS:
+        if field not in text:
+            fail(f"{agent_file.relative_to(ROOT)} missing local template field: {field}")
+    for field in LOCAL_AGENT_REQUIRED_FIELDS:
+        if not read_toml_string(text, field):
+            fail(f"{agent_file.relative_to(ROOT)} has invalid local template field: {field}")
+    name = read_toml_string(text, "name")
+    sandbox_mode = read_toml_string(text, "sandbox_mode")
+    if not name:
+        fail(f"{agent_file.relative_to(ROOT)} has invalid agent name")
+    expected_sandbox = "workspace-write" if name in WRITING_AGENTS else "read-only"
+    if sandbox_mode != expected_sandbox:
+        fail(
+            f"{agent_file.relative_to(ROOT)} expected sandbox_mode = "
+            f"{expected_sandbox!r} for agent {name!r}, got {sandbox_mode!r}"
+        )
+    instructions = read_toml_string(text, "developer_instructions")
+    if not instructions:
+        fail(f"{agent_file.relative_to(ROOT)} has invalid developer_instructions")
+    for phrase in PUBLIC_LOCK_PHRASES:
+        if phrase not in instructions:
+            fail(f"{agent_file.relative_to(ROOT)} missing lock phrase: {phrase}")
+
+
 def check_agents() -> None:
     agents_dir = ROOT / ".codex/agents"
     agent_files = sorted(agents_dir.glob("*.toml"))
@@ -323,31 +395,30 @@ def check_agents() -> None:
         fail("No .codex/agents/*.toml files found")
 
     for agent_file in agent_files:
-        text = agent_file.read_text(encoding="utf-8")
-        if "localized_nickname" in text:
-            fail(f"{agent_file.relative_to(ROOT)} should keep localized naming policy in Docs, not custom TOML fields")
-        for field in LOCAL_AGENT_REQUIRED_FIELDS:
-            if field not in text:
-                fail(f"{agent_file.relative_to(ROOT)} missing local template field: {field}")
-        for field in LOCAL_AGENT_REQUIRED_FIELDS:
-            if not read_toml_string(text, field):
-                fail(f"{agent_file.relative_to(ROOT)} has invalid local template field: {field}")
-        name = read_toml_string(text, "name")
-        sandbox_mode = read_toml_string(text, "sandbox_mode")
-        if not name:
-            fail(f"{agent_file.relative_to(ROOT)} has invalid agent name")
-        expected_sandbox = "workspace-write" if name in WRITING_AGENTS else "read-only"
-        if sandbox_mode != expected_sandbox:
-            fail(
-                f"{agent_file.relative_to(ROOT)} expected sandbox_mode = "
-                f"{expected_sandbox!r} for agent {name!r}, got {sandbox_mode!r}"
-            )
-        instructions = read_toml_string(text, "developer_instructions")
-        if not instructions:
-            fail(f"{agent_file.relative_to(ROOT)} has invalid developer_instructions")
-        for phrase in PUBLIC_LOCK_PHRASES:
-            if phrase not in instructions:
-                fail(f"{agent_file.relative_to(ROOT)} missing lock phrase: {phrase}")
+        check_agent_file(agent_file)
+
+
+def check_industry_packs() -> None:
+    packs = CONFIG.get("industry_packs", {})
+    if packs.get("required_selection") is not True:
+        fail(".codex/team-kit.toml must require industry pack selection")
+    available = packs.get("available", [])
+    if not isinstance(available, list) or "game" not in available:
+        fail(".codex/team-kit.toml must list the game industry pack")
+
+    game_dir = ROOT / ".codex/agent-packs/game"
+    missing = [name for name in GAME_PACK_AGENTS if not (game_dir / name).exists()]
+    if missing:
+        fail("Game pack missing agents: " + ", ".join(missing))
+    for agent_file in sorted(game_dir.glob("*.toml")):
+        if agent_file.name == "pack.toml":
+            continue
+        check_agent_file(agent_file)
+
+    pack_doc = (ROOT / "Docs/03-团队/行业扩展包/README.md").read_text(encoding="utf-8")
+    for phrase in ["none", "game-basic", "game-full", "custom", "策划", "程序", "美术", "数值"]:
+        if phrase not in pack_doc:
+            fail(f"Docs/03-团队/行业扩展包/README.md missing phrase: {phrase}")
 
 
 def check_work_log_template() -> None:
@@ -372,6 +443,8 @@ def check_team_docs() -> None:
         "团队贡献汇报",
         "docs_root",
         "真相源策略",
+        "staging",
+        "行业扩展包",
     ]:
         if phrase not in ai_manual:
             fail(f"{cfg_path('execution_manual')} missing phrase: {phrase}")
@@ -390,8 +463,11 @@ def check_team_docs() -> None:
         "真实团队成员的人名",
         "不使用本模板文档中的示例名作为固定输出",
         "探测目标项目",
+        "staging",
         "最小模式",
         "完整模式",
+        "game-basic",
+        "game-full",
     ]:
         if phrase not in init_doc:
             fail(f"{cfg_path('team_init')} missing phrase: {phrase}")
@@ -407,18 +483,44 @@ def check_team_docs() -> None:
             fail(f".codex/team/dispatch-protocol.md missing phrase: {phrase}")
 
 
+def check_staging_docs() -> None:
+    staging = CONFIG.get("staging", {})
+    if staging.get("required") is not True:
+        fail(".codex/team-kit.toml must require staging")
+    if staging.get("delete_after_merge") is not True:
+        fail(".codex/team-kit.toml must require deleting staging after merge")
+    if not staging.get("fallback_dir"):
+        fail(".codex/team-kit.toml missing [staging].fallback_dir")
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    init_doc = (ROOT / cfg_path("team_init")).read_text(encoding="utf-8")
+    ai_manual = (ROOT / cfg_path("execution_manual")).read_text(encoding="utf-8")
+    for phrase in ["不要把模板仓库直接拉到项目根目录", "staging", "删除 staging"]:
+        if phrase not in readme:
+            fail(f"README.md missing staging phrase: {phrase}")
+    for phrase in ["Staging 接入协议", "不得把模板仓库直接拉取到目标项目根目录", "删除 staging 目录"]:
+        if phrase not in init_doc:
+            fail(f"{cfg_path('team_init')} missing staging phrase: {phrase}")
+    for phrase in ["禁止直接 clone/解压到目标项目根目录", "删除 staging 目录"]:
+        if phrase not in ai_manual:
+            fail(f"{cfg_path('execution_manual')} missing staging phrase: {phrase}")
+
+
 def main() -> None:
     check_required_paths()
     check_docs_root_case()
     check_truth_sources()
     check_no_ds_store()
+    check_no_forbidden_staging_dirs()
     check_no_cross_project_paths()
     check_agents_md_router()
     check_config()
     check_public_lock_source()
     check_agents()
+    check_industry_packs()
     check_work_log_template()
     check_team_docs()
+    check_staging_docs()
     print("[OK] local codex-team-kit-router template integrity check passed")
 
 

@@ -1,0 +1,18 @@
+[pack]
+id = "game"
+display_name = "游戏行业扩展包"
+description = "可选游戏项目 agents，覆盖策划、程序、美术和验证分组。"
+default_selection = "ask"
+
+[choices]
+none = "不加入游戏行业 agents。"
+game_basic = "加入基础游戏小队：game_designer, gameplay_engineer, ui_artist, playtest_researcher。"
+game_full = "加入完整游戏小队：本扩展包所有 agents。"
+custom = "按分组或单个 agent 选择。"
+
+[groups]
+design = "策划：game_designer, combat_designer, balance_designer, level_designer"
+engineering = "程序：gameplay_engineer, ui_engineer"
+art = "美术：game_art_director, ui_artist, technical_artist"
+validation = "验证：playtest_researcher"
+

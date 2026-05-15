@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | `Quick` | 简单问答、小范围检查、无需改动的快速判断 | 本文件和用户点名文件 |
 | `Project` | 普通规划、实现、文档更新、局部修复 | `Docs/01-项目/项目规范.md`、`Docs/01-项目/项目进度.md`、`Docs/02-执行/AI执行手册.md` |
-| `Team` | 用户明确要求团队流程、子代理、并行 agent | `Docs/03-团队/Agents/团队初始化.md`、`Docs/03-团队/开发团队.md`、`Docs/02-执行/AI执行手册.md`、`.codex/team/dispatch-protocol.md`、`.codex/team/model-routing.md`、`.codex/team/public-file-lock.md` |
+| `Team` | 用户明确要求团队流程、子代理、并行 agent | `Docs/03-团队/Agents/团队初始化.md`、`Docs/03-团队/行业扩展包/README.md`、`Docs/03-团队/开发团队.md`、`Docs/02-执行/AI执行手册.md`、`.codex/team/dispatch-protocol.md`、`.codex/team/model-routing.md`、`.codex/team/public-file-lock.md` |
 | `Review` | 审查、QA、安全、回归、验收 | `Docs/02-执行/AI执行手册.md`、`.codex/team/public-file-lock.md`、`Docs/03-团队/Agents/交付模板/QA验收模板.md` |
 | `Agent-Setup` | 搭建、扩展、调整团队模板或 agent 定义 | `Docs/03-团队/开发团队.md`、`Docs/02-执行/工程结构与文档路由.md`、`.codex/team/role-taxonomy.md`、`.codex/team/model-routing.md`、`.codex/team/public-file-lock.md`、`.codex/team/spawn-prompt-templates.md`、`.codex/agents/*.toml` |
 
@@ -35,7 +35,10 @@
 - `.codex/config.toml`
 - `.codex/team-kit.toml`
 - `.codex/agents/*.toml`
+- `.codex/agent-packs/**/*.toml`
+- `.codex/agent-packs/**/*.md`
 - `.codex/team/*.md`
+- `Docs/03-团队/行业扩展包/*.md`
 
 子代理如需更新公共文件，只能在结果或工作记录中提出“建议回写”，由主线程验收后决定是否采纳。
 
