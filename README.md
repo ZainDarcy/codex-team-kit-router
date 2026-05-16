@@ -58,6 +58,7 @@ https://github.com/ZainDarcy/codex-team-kit-router
 
 - 小问答、小检查、小修复：用轻量模式。
 - 只想要方案：用“只规划分工，不执行”。
+- 中大型迭代先过方案门禁：先落范围、验收和回退风险，用户批准范围后再实现。
 - 跨模块、高风险、需要审查或并行工作：再用团队流程。
 
 ## 工作流程总览
@@ -176,7 +177,7 @@ flowchart TD
 | 路由 | 适用场景 | 主要读取 |
 | --- | --- | --- |
 | `Quick` | 简单问答、小检查、无需改动 | `AGENTS.md` 和用户点名文件 |
-| `Project` | 普通实现、规划、局部修复、文档更新 | 项目规范、项目进度、AI 执行手册 |
+| `Project` | 普通实现、规划、局部修复、文档更新；中大型迭代先过方案门禁 | 项目规范、项目进度、AI 执行手册 |
 | `Team` | 已初始化项目的日常团队流程、子代理、并行 agent | Team 运行卡，再按卡片追加调度文件 |
 | `Team-Init` | 团队初始化、重新初始化、模板接入、迁移、扩展包选择 | 团队初始化、`.codex/team-kit.toml`，再按需读取行业包和派发协议 |
 | `Review` | 审查、QA、安全、回归、验收 | AI 执行手册、公共写锁、QA 模板 |
@@ -191,6 +192,7 @@ flowchart TD
 | 入口路由 | `AGENTS.md` |
 | 目标项目状态 | `Docs/01-项目/项目规范.md`、`Docs/01-项目/项目进度.md` |
 | 普通执行 | `Docs/02-执行/AI执行手册.md` |
+| 中大型迭代方案 | `Docs/02-执行/实施方案/README.md` |
 | 日常 Team | `Docs/02-执行/Team运行卡.md`，需要派发时再读 `.codex/team/dispatch-protocol.md` |
 | 团队初始化 | `Docs/03-团队/Agents/团队初始化.md`、`Docs/03-团队/行业扩展包/README.md`、`.codex/team-kit.toml` |
 | agent / 行业包调整 | `.codex/agents/`、`.codex/agent-packs/`、`.codex/team/model-routing.md`、`.codex/team/role-taxonomy.md` |
@@ -218,7 +220,7 @@ python3 .codex/tools/check_template_integrity.py
 
 该脚本只做本地模板结构体检，不修改文件、不联网，也不代表 OpenAI/Codex 官方规则校验。它会检查路由、链接、`.DS_Store`、行业包选择值和部分运行态文档体量预算，但不会精确测量真实 prompt token。需要确认当前官方行为时，应让 AI 先查当前 OpenAI Codex 官方文档，再更新模板。
 
-`.codex/hooks.json` 是 Codex 官方工作流 hook 配置，项目 `.codex/` 被信任后可在 `/hooks` 里审查启用；它覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`。`.codex/hooks/` 放 handler 与手动 fallback gate：初始化后运行 `post-init`，派发团队前运行 `pre-team-dispatch`，最终回复前运行 `pre-final`。
+`.codex/hooks.json` 是 Codex 官方工作流 hook 配置，项目 `.codex/` 被信任后可在 `/hooks` 里审查启用；它覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`。`.codex/hooks/` 放 handler 与手动 fallback gate：初始化后运行 `post-init`，中大型迭代进入写入前运行 `pre-implementation`，派发团队前运行 `pre-team-dispatch`，最终回复前运行 `pre-final`。
 
 本仓库还提供 repo-local `.githooks/`。在模板维护仓库中把 `core.hooksPath` 指向 `.githooks` 后，`pre-commit` 会自动运行体检和 `git diff --check`；`pre-push` 会追加体检脚本语法编译和 `.DS_Store` 扫描。
 

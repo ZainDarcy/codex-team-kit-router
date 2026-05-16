@@ -45,6 +45,17 @@ TEAM_PROMPT_MARKERS = [
     "工作流",
 ]
 
+PLAN_PROMPT_MARKERS = [
+    "中大型",
+    "大改",
+    "重构",
+    "实施方案",
+    "方案包",
+    "批准执行",
+    "开始实施",
+    "按文档做",
+]
+
 
 def emit(payload: dict[str, Any]) -> None:
     json.dump(payload, sys.stdout, ensure_ascii=False)
@@ -98,13 +109,19 @@ def blocks_core_delete(text: str) -> str | None:
 
 
 def hook_context_for_prompt(prompt: str) -> str | None:
-    if not any(marker in prompt for marker in TEAM_PROMPT_MARKERS):
+    prompt_markers = [*TEAM_PROMPT_MARKERS, *PLAN_PROMPT_MARKERS]
+    if not any(marker in prompt for marker in prompt_markers):
         return None
 
     if any(marker in prompt for marker in ["初始化", "重新初始化", "reinit"]):
         return (
             "Team-Init route reminder: stage the kit, probe existing truth sources, "
             "preserve member identities on reinit, merge selected files only, then run post-init."
+        )
+    if any(marker in prompt for marker in PLAN_PROMPT_MARKERS):
+        return (
+            "Planning gate reminder: medium/large iterations need a scoped plan, explicit "
+            "approval for that scope, then pre-implementation before runtime writes."
         )
     if any(marker in prompt for marker in ["团队", "子代理", "并行", "agent", "Team"]):
         return (

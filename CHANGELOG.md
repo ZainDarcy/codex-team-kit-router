@@ -2,6 +2,8 @@
 
 ## Workflow Context Iteration
 
+- Added a compact medium/large iteration planning gate: scope first, explicit approval, then `pre-implementation` before runtime writes.
+- Kept the planning gate in existing route and execution docs, with no project-specific examples or extra rule files.
 - Added tree-style and Mermaid workflow views to make routing, initialization, and Team execution easier to inspect visually.
 - Added `game-pack-v2` planning scaffolds: scenario matrix, game task dispatch templates, playtest evidence contract, and safer public-file source-of-truth guidance.
 - Slimmed README, AI execution, dispatch, and game prompt templates to reduce default context load and added local line-budget checks for key runtime docs.

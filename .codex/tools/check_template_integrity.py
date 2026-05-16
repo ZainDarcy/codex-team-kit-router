@@ -251,6 +251,7 @@ def check_initialization_config() -> None:
         "project_spec",
         "project_progress",
         "ai_workflow",
+        "implementation_plan_root",
         "team_dir",
         "init_report_dir",
     ]:
@@ -265,6 +266,14 @@ def check_initialization_config() -> None:
         fail(".codex/team-kit.toml must require team-ready state before Team route")
     if cfg("initialization", "status_file") != cfg_path("team_roster"):
         fail(".codex/team-kit.toml [initialization].status_file must match team_roster")
+    if cfg("planning_gate", "required_for_medium_large") is not True:
+        fail(".codex/team-kit.toml must enable the medium/large planning gate")
+    values = cfg("planning_gate", "approval_status_values", [])
+    if not isinstance(values, list) or "approved" not in values:
+        fail(".codex/team-kit.toml planning gate must include approval_status_values with approved")
+    ready_values = cfg("planning_gate", "implementation_ready_status_values", [])
+    if not isinstance(ready_values, list) or "approved" not in ready_values:
+        fail(".codex/team-kit.toml planning gate must include implementation_ready_status_values with approved")
 
 
 def required_paths() -> list[str]:
@@ -276,6 +285,7 @@ def required_paths() -> list[str]:
         ".codex/hooks/codex_workflow_hook.py",
         ".codex/hooks/post-init",
         ".codex/hooks/pre-final",
+        ".codex/hooks/pre-implementation",
         ".codex/hooks/pre-team-dispatch",
         ".githooks/pre-commit",
         ".githooks/pre-push",
@@ -293,6 +303,7 @@ def required_paths() -> list[str]:
         cfg_path("project_spec"),
         cfg_path("project_progress"),
         cfg_path("execution_manual"),
+        f"{cfg_path('implementation_plan_root')}/README.md",
         cfg_path("routing_doc"),
         cfg_path("team_run_card"),
         cfg_path("team_doc"),
@@ -520,7 +531,7 @@ def check_local_hooks() -> None:
         if not os.access(hook_path, os.X_OK):
             fail(f"{hook_path.relative_to(ROOT)} must be executable")
 
-    for hook_name in ["post-init", "pre-final", "pre-team-dispatch"]:
+    for hook_name in ["post-init", "pre-final", "pre-implementation", "pre-team-dispatch"]:
         hook_path = ROOT / ".codex/hooks" / hook_name
         text = hook_path.read_text(encoding="utf-8")
         if "check_workflow_runtime.py" not in text or f"--gate {hook_name}" not in text:
@@ -587,6 +598,11 @@ def check_workflow_runtime_checker() -> None:
         "pre-team-dispatch",
         "post-init",
         "pre-final",
+        "pre-implementation",
+        "planning_gate",
+        "implementation_ready_status_values",
+        "批准执行",
+        "No implementation plan package",
         "Team route requires [initialization].state = initialized",
         "Team Assignment Map",
         ".DS_Store",
@@ -807,9 +823,17 @@ def check_team_docs() -> None:
         "重新初始化",
         "Team Assignment Map",
         "按参与者更新最近任务和任务次数",
+        "中大型迭代方案门禁",
+        "批准执行",
+        "pre-implementation",
     ]:
         if phrase not in ai_manual:
             fail(f"{cfg_path('execution_manual')} missing phrase: {phrase}")
+
+    plan_index = (ROOT / f"{cfg_path('implementation_plan_root')}/README.md").read_text(encoding="utf-8")
+    for phrase in ["实施方案索引", "中大型迭代", "防臃肿约束", "pre-implementation", "行业专属示例"]:
+        if phrase not in plan_index:
+            fail(f"{cfg_path('implementation_plan_root')}/README.md missing phrase: {phrase}")
 
     run_card = (ROOT / cfg_path("team_run_card")).read_text(encoding="utf-8")
     for phrase in ["已初始化项目", "默认不读取", "Team-Init", "Team Assignment Map", "按参与者更新最近任务和任务次数", "只读 / dry-run"]:
@@ -917,6 +941,7 @@ def check_runtime_context_budget() -> None:
     budgets = {
         "README.md": int(cfg("checks", "max_readme_lines", 240)),
         cfg_path("execution_manual"): int(cfg("checks", "max_ai_manual_lines", 140)),
+        f"{cfg_path('implementation_plan_root')}/README.md": int(cfg("checks", "max_implementation_plan_index_lines", 80)),
         cfg_path("team_run_card"): int(cfg("checks", "max_team_run_card_lines", 80)),
         cfg_path("routing_doc"): int(cfg("checks", "max_routing_doc_lines", 180)),
         cfg_path("team_doc"): int(cfg("checks", "max_team_doc_lines", 180)),

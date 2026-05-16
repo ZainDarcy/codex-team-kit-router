@@ -94,6 +94,13 @@ def cfg_path(key: str) -> str:
     return value
 
 
+def plan_root_path() -> str:
+    value = cfg("paths", "implementation_plan_root", "Docs/02-执行/实施方案")
+    if not isinstance(value, str) or not value:
+        fail(".codex/team-kit.toml [paths].implementation_plan_root must be a non-empty string")
+    return value
+
+
 def require_path(path: str) -> Path:
     candidate = ROOT / path
     if not candidate.exists():
@@ -150,11 +157,74 @@ def check_team_ready() -> None:
         fail("No initialized member profiles found")
 
 
+def approval_status_values() -> list[str]:
+    values = cfg("planning_gate", "approval_status_values", ["draft", "reviewed", "approved", "in_progress", "done"])
+    if not isinstance(values, list) or not values:
+        fail(".codex/team-kit.toml planning_gate.approval_status_values must be a non-empty list")
+    return [str(value).lower() for value in values]
+
+
+def implementation_ready_status_values() -> list[str]:
+    allowed = set(approval_status_values())
+    values = cfg("planning_gate", "implementation_ready_status_values", ["approved", "in_progress", "done"])
+    if not isinstance(values, list) or not values:
+        fail(".codex/team-kit.toml planning_gate.implementation_ready_status_values must be a non-empty list")
+    ready = [str(value).lower() for value in values]
+    unexpected = sorted(value for value in ready if value not in allowed)
+    if unexpected:
+        fail(".codex/team-kit.toml implementation-ready values must be listed in approval_status_values: " + ", ".join(unexpected))
+    return ready
+
+
+def has_approved_scope(text: str) -> bool:
+    ready_values = implementation_ready_status_values()
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        lower = line.lower()
+        approval = re.search(r"批准执行\s*[:：]\s*(.+)$", line)
+        if approval:
+            value = approval.group(1).strip()
+            if value and "待填写" not in value and "<" not in value and ">" not in value:
+                return True
+        if any(key in lower for key in ["状态", "status", "approval", "approved_for_implementation"]):
+            for value in ready_values:
+                if re.search(rf"[:：=]\s*`?{re.escape(value)}`?(?:\s|$|[,，.;；。])", lower):
+                    return True
+        if "状态：已批准" in line:
+            return True
+    return False
+
+
+def check_pre_implementation_ready() -> None:
+    if cfg("planning_gate", "required_for_medium_large", True) is not True:
+        return
+
+    plan_root_rel = plan_root_path()
+    plan_root = ROOT / plan_root_rel
+    if not plan_root.exists():
+        fail(f"Missing implementation plan root for M/L work: {plan_root_rel}")
+
+    require_path(f"{plan_root_rel}/README.md")
+    candidates = []
+    candidates.extend(sorted(plan_root.glob("*/README.md")))
+    if not candidates:
+        fail(f"No implementation plan package found under {plan_root_rel}")
+
+    approved = [path for path in candidates if has_approved_scope(path.read_text(encoding="utf-8"))]
+    if not approved:
+        fail(
+            "No approved implementation scope found. Mark the plan with "
+            "`批准执行：<方案名/版本>` or an approved status before writing runtime code."
+        )
+
+
 def run_gate(gate: str) -> None:
     check_common()
     check_assignment_map()
     if gate == "pre-team-dispatch":
         check_team_ready()
+    elif gate == "pre-implementation":
+        check_pre_implementation_ready()
     elif gate == "post-init":
         if cfg("initialization", "state") == "template-source":
             fail("Target project still has template-source initialization state")
@@ -167,7 +237,7 @@ def run_gate(gate: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gate", required=True, choices=["post-init", "pre-team-dispatch", "pre-final"])
+    parser.add_argument("--gate", required=True, choices=["post-init", "pre-team-dispatch", "pre-implementation", "pre-final"])
     args = parser.parse_args()
     run_gate(args.gate)
 
