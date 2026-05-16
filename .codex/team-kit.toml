@@ -27,6 +27,7 @@ project_spec = "Docs/01-项目/项目规范.md"
 project_progress = "Docs/01-项目/项目进度.md"
 execution_manual = "Docs/02-执行/AI执行手册.md"
 routing_doc = "Docs/02-执行/工程结构与文档路由.md"
+team_run_card = "Docs/02-执行/Team运行卡.md"
 team_doc = "Docs/03-团队/开发团队.md"
 agent_root = "Docs/03-团队/Agents"
 agent_pack_root = ".codex/agent-packs"
@@ -77,6 +78,8 @@ globs = [
 
 [checks]
 max_agents_md_lines = 150
+max_team_run_card_lines = 80
+max_dispatch_protocol_lines = 180
 forbidden_absolute_path_fragments = [
   "/Users/",
   "/home/",

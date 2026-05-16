@@ -16,12 +16,13 @@ import sys
 import ast
 import os
 from pathlib import Path
+from urllib.parse import unquote
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / ".codex/team-kit.toml"
 
-ROUTES = ["Quick", "Project", "Team", "Review", "Agent-Setup"]
+ROUTES = ["Quick", "Project", "Team", "Team-Init", "Review", "Agent-Setup"]
 
 DISPATCH_PHRASES = [
     "Delegation Card",
@@ -75,6 +76,7 @@ WORK_LOG_HEADINGS = [
     "日期",
     "Agent 岗位",
     "显示昵称",
+    "参与者贡献",
     "输入材料",
     "完成内容",
     "改动文件",
@@ -82,6 +84,16 @@ WORK_LOG_HEADINGS = [
     "发现的问题",
     "建议回写",
     "下一次更懂项目的地方",
+]
+
+EXPECTED_GAME_CHOICES = {"none", "game-basic", "game-full", "custom"}
+
+CHOICE_KEY_DOCS = [
+    "README.md",
+    "CHANGELOG.md",
+    "Docs/02-执行/AI执行手册.md",
+    "Docs/03-团队/开发团队.md",
+    "Docs/03-团队/行业扩展包/README.md",
 ]
 
 
@@ -200,6 +212,7 @@ def required_paths() -> list[str]:
         cfg_path("project_progress"),
         cfg_path("execution_manual"),
         cfg_path("routing_doc"),
+        cfg_path("team_run_card"),
         cfg_path("team_doc"),
         cfg_path("team_init"),
         cfg_path("team_roster"),
@@ -311,20 +324,52 @@ def check_no_cross_project_paths() -> None:
                 fail(f"Found forbidden absolute path fragment in {path.relative_to(ROOT)}: {fragment}")
 
 
+def check_markdown_links() -> None:
+    link_pattern = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+    for md_file in sorted(ROOT.rglob("*.md")):
+        if ".git" in md_file.parts:
+            continue
+        text = md_file.read_text(encoding="utf-8")
+        for raw_target in link_pattern.findall(text):
+            target = raw_target.strip()
+            if not target or target.startswith(("#", "http://", "https://", "mailto:")):
+                continue
+            if " " in target:
+                target = target.split(" ", 1)[0]
+            target = target.strip("<>")
+            target = unquote(target.split("#", 1)[0])
+            if not target:
+                continue
+            if target.startswith("/"):
+                fail(f"{md_file.relative_to(ROOT)} contains absolute markdown link: {raw_target}")
+            candidate = (md_file.parent / target).resolve()
+            try:
+                candidate.relative_to(ROOT.resolve())
+            except ValueError:
+                fail(f"{md_file.relative_to(ROOT)} links outside template: {raw_target}")
+            if not candidate.exists():
+                fail(f"{md_file.relative_to(ROOT)} has broken markdown link: {raw_target}")
+
+
 def check_agents_md_router() -> None:
     text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     line_count = len(text.splitlines())
     max_lines = int(cfg("checks", "max_agents_md_lines", 150))
     if line_count > max_lines:
         fail(f"AGENTS.md should stay router-sized, got {line_count} lines")
+    team_route_line = next((line for line in text.splitlines() if line.startswith("| `Team` |")), "")
+    if cfg_path("team_init") in team_route_line or "行业扩展包/README.md" in team_route_line:
+        fail("AGENTS.md Team route must not load initialization or industry-pack docs")
     for route in ROUTES:
         if route not in text:
             fail(f"AGENTS.md missing route: {route}")
     for phrase in ["Router Only", "路由表", "公共文件写锁", "子代理触发门槛"]:
         if phrase not in text:
             fail(f"AGENTS.md missing router phrase: {phrase}")
+    if cfg_path("team_run_card") not in text:
+        fail("AGENTS.md Team route must point to the Team run card")
     if cfg_path("team_init") not in text:
-        fail("AGENTS.md Team route must point to the team initialization doc")
+        fail("AGENTS.md Team-Init route must point to the team initialization doc")
     old_forced_load = "开始任何需求、实现、调研、评审或文档更新前"
     if old_forced_load in text:
         fail("AGENTS.md still contains the old forced full-context load rule")
@@ -358,6 +403,35 @@ def read_toml_string(text: str, field: str) -> str | None:
     if single:
         return single.group(1)
     return None
+
+
+def read_pack_choice_keys(pack_toml: Path) -> set[str]:
+    text = pack_toml.read_text(encoding="utf-8")
+    in_choices = False
+    keys: set[str] = set()
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        section = re.match(r"^\[([A-Za-z0-9_-]+)\]$", line)
+        if section:
+            in_choices = section.group(1) == "choices"
+            continue
+        if not in_choices:
+            continue
+        pair = re.match(r'^([A-Za-z0-9_-]+)\s*=\s*"[^"]*"\s*$', line)
+        if not pair:
+            fail(f"{pack_toml.relative_to(ROOT)} has invalid [choices] line: {raw_line}")
+        keys.add(pair.group(1))
+    if not keys:
+        fail(f"{pack_toml.relative_to(ROOT)} missing [choices] entries")
+    return keys
+
+
+def ensure_choice_keys_present(text: str, source_path: str, keys: set[str]) -> None:
+    for key in sorted(keys):
+        if key not in text:
+            fail(f"{source_path} missing game pack choice key: {key}")
 
 
 def check_agent_file(agent_file: Path) -> None:
@@ -415,6 +489,18 @@ def check_industry_packs() -> None:
             continue
         check_agent_file(agent_file)
 
+    pack_toml = game_dir / "pack.toml"
+    choice_keys = read_pack_choice_keys(pack_toml)
+    if choice_keys != EXPECTED_GAME_CHOICES:
+        fail(
+            ".codex/agent-packs/game/pack.toml [choices] keys mismatch; "
+            f"expected {sorted(EXPECTED_GAME_CHOICES)}, got {sorted(choice_keys)}"
+        )
+
+    for doc_path in [*CHOICE_KEY_DOCS, cfg_path("team_init")]:
+        text = (ROOT / doc_path).read_text(encoding="utf-8")
+        ensure_choice_keys_present(text, doc_path, choice_keys)
+
     pack_doc = (ROOT / "Docs/03-团队/行业扩展包/README.md").read_text(encoding="utf-8")
     for phrase in ["none", "game-basic", "game-full", "custom", "策划", "程序", "美术", "数值"]:
         if phrase not in pack_doc:
@@ -430,7 +516,7 @@ def check_work_log_template() -> None:
 
 def check_team_docs() -> None:
     team_doc = (ROOT / cfg_path("team_doc")).read_text(encoding="utf-8")
-    for phrase in ["等待本波全部完成", "关闭完成的子代理线程", "公共文件只由 Codex 主线程修改"]:
+    for phrase in ["等待本波全部完成", "关闭完成的子代理线程", "公共文件只由 Codex 主线程修改", "按参与者更新最近任务和任务次数"]:
         if phrase not in team_doc:
             fail(f"{cfg_path('team_doc')} missing phrase: {phrase}")
 
@@ -445,16 +531,30 @@ def check_team_docs() -> None:
         "真相源策略",
         "staging",
         "行业扩展包",
+        "按参与者更新最近任务和任务次数",
     ]:
         if phrase not in ai_manual:
             fail(f"{cfg_path('execution_manual')} missing phrase: {phrase}")
+
+    run_card = (ROOT / cfg_path("team_run_card")).read_text(encoding="utf-8")
+    for phrase in ["已初始化项目", "默认不读取", "Team-Init", "按参与者更新最近任务和任务次数"]:
+        if phrase not in run_card:
+            fail(f"{cfg_path('team_run_card')} missing phrase: {phrase}")
 
     routing_doc = (ROOT / cfg_path("routing_doc")).read_text(encoding="utf-8")
     for route in ROUTES:
         if route not in routing_doc:
             fail(f"{cfg_path('routing_doc')} missing route: {route}")
+    team_section_match = re.search(r"### Team\n(.*?)\n### Team-Init", routing_doc, re.DOTALL)
+    if not team_section_match:
+        fail(f"{cfg_path('routing_doc')} missing bounded Team section before Team-Init")
+    team_section = team_section_match.group(1)
+    if cfg_path("team_init") in team_section or "行业扩展包/README.md" in team_section:
+        fail(f"{cfg_path('routing_doc')} Team section must not load initialization or industry-pack docs")
+    if cfg_path("team_run_card") not in routing_doc:
+        fail(f"{cfg_path('routing_doc')} Team route must include Team run card")
     if cfg_path("team_init") not in routing_doc:
-        fail(f"{cfg_path('routing_doc')} Team route must include team initialization")
+        fail(f"{cfg_path('routing_doc')} Team-Init route must include team initialization")
 
     init_doc = (ROOT / cfg_path("team_init")).read_text(encoding="utf-8")
     for phrase in [
@@ -473,7 +573,7 @@ def check_team_docs() -> None:
             fail(f"{cfg_path('team_init')} missing phrase: {phrase}")
 
     roster = (ROOT / cfg_path("team_roster")).read_text(encoding="utf-8")
-    for phrase in ["状态：pending", "待随机生成", "初始化时由 AI 随机起名并建档"]:
+    for phrase in ["状态：pending", "待随机生成", "初始化时由 AI 随机起名并建档", "最近任务和任务次数"]:
         if phrase not in roster:
             fail(f"{cfg_path('team_roster')} missing initialization phrase: {phrase}")
 
@@ -506,6 +606,35 @@ def check_staging_docs() -> None:
             fail(f"{cfg_path('execution_manual')} missing staging phrase: {phrase}")
 
 
+def check_readme_routes() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    for route in ROUTES:
+        if f"`{route}`" not in readme:
+            fail(f"README.md missing route: {route}")
+    team_route_line = next((line for line in readme.splitlines() if line.startswith("| `Team` |")), "")
+    if "团队初始化" in team_route_line or "行业扩展包" in team_route_line:
+        fail("README.md Team route must not tell users to load initialization or industry-pack docs")
+    for phrase in [
+        "Team 运行卡",
+        "团队初始化",
+        "按参与者更新团队名册",
+        "新增可复用经验",
+    ]:
+        if phrase not in readme:
+            fail(f"README.md missing workflow phrase: {phrase}")
+
+
+def check_runtime_context_budget() -> None:
+    budgets = {
+        cfg_path("team_run_card"): int(cfg("checks", "max_team_run_card_lines", 80)),
+        ".codex/team/dispatch-protocol.md": int(cfg("checks", "max_dispatch_protocol_lines", 180)),
+    }
+    for path, max_lines in budgets.items():
+        line_count = len((ROOT / path).read_text(encoding="utf-8").splitlines())
+        if line_count > max_lines:
+            fail(f"{path} exceeds local runtime context budget: {line_count} > {max_lines} lines")
+
+
 def main() -> None:
     check_required_paths()
     check_docs_root_case()
@@ -513,6 +642,7 @@ def main() -> None:
     check_no_ds_store()
     check_no_forbidden_staging_dirs()
     check_no_cross_project_paths()
+    check_markdown_links()
     check_agents_md_router()
     check_config()
     check_public_lock_source()
@@ -521,6 +651,8 @@ def main() -> None:
     check_work_log_template()
     check_team_docs()
     check_staging_docs()
+    check_readme_routes()
+    check_runtime_context_budget()
     print("[OK] local codex-team-kit-router template integrity check passed")
 
 

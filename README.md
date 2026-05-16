@@ -54,12 +54,12 @@ https://github.com/ZainDarcy/codex-team-kit-router
 用户需求
   -> AGENTS.md 判断路由
   -> 按路由读取 Docs/ 和 .codex/team/ 中的必要文件
-  -> 如需团队流程，先确认团队初始化和行业扩展包选择
+  -> 如需日常团队流程，读取 Team 运行卡；如团队未初始化，切到 Team-Init
   -> 输出 Delegation Card
   -> 派发子代理，子代理只拿压缩上下文包
   -> 等待本波子代理全部完成
   -> 主线程整合、验证、更新公共文件
-  -> 落盘团队名册、成员档案、工作记录
+  -> 落盘本波工作记录，按参与者更新团队名册，必要时更新成员档案
   -> 向用户汇报谁做了什么、产出了什么、验证了什么
 ```
 
@@ -117,7 +117,8 @@ https://github.com/ZainDarcy/codex-team-kit-router
 | --- | --- | --- |
 | `Quick` | 简单问答、小检查、无需改动 | `AGENTS.md` 和用户点名文件 |
 | `Project` | 普通实现、规划、局部修复、文档更新 | 项目规范、项目进度、AI 执行手册 |
-| `Team` | 用户明确要求团队流程、子代理、并行 agent | 团队初始化、开发团队、派发协议、模型路由、公共写锁 |
+| `Team` | 已初始化项目的日常团队流程、子代理、并行 agent | 开发团队、AI 执行手册、Team 运行卡、派发协议、模型路由、公共写锁 |
+| `Team-Init` | 团队初始化、模板接入、迁移、扩展包选择 | 团队初始化、行业扩展包、开发团队、AI 执行手册、工程结构与文档路由、派发协议 |
 | `Review` | 审查、QA、安全、回归、验收 | AI 执行手册、公共写锁、QA 模板 |
 | `Agent-Setup` | 搭建或调整团队模板、agent 定义、行业包 | 角色分类、模型路由、公共写锁、agent TOML、行业扩展包 |
 
@@ -142,7 +143,8 @@ https://github.com/ZainDarcy/codex-team-kit-router
 | `Docs/01-项目/项目规范.md` | 目标项目的稳定规范模板，记录长期不频繁变化的约束 |
 | `Docs/01-项目/项目进度.md` | 目标项目的动态进度模板，记录当前状态、已完成事项、阻塞和下一步 |
 | `Docs/02-执行/AI执行手册.md` | 主线程执行流程，包含执行前判断、何时问用户、子代理派发、验证和最终汇报 |
-| `Docs/02-执行/工程结构与文档路由.md` | Quick / Project / Team / Review / Agent-Setup 五类路由的文档导航 |
+| `Docs/02-执行/工程结构与文档路由.md` | Quick / Project / Team / Team-Init / Review / Agent-Setup 路由的文档导航 |
+| `Docs/02-执行/Team运行卡.md` | 已初始化项目的日常 Team 轻量运行规则，避免每次读取初始化和迁移文档 |
 | `Docs/03-团队/开发团队.md` | 团队结构、默认核心小队、行业扩展选择、执行流程、验收门禁和团队沉淀规则 |
 | `Docs/03-团队/行业扩展包/README.md` | 行业扩展包说明，当前包含游戏行业包和选择方式 |
 
@@ -215,9 +217,9 @@ https://github.com/ZainDarcy/codex-team-kit-router
 
 每次走 `Team` 路由或启用任何子代理，主线程最终回复前必须确认：
 
-- `Docs/03-团队/Agents/团队名册.md` 已更新。
-- 对应成员档案已创建或更新。
-- 本轮工作记录已按模板落盘。
+- 本波工作记录已按模板落盘，并逐一列出参与者、产出和验证。
+- `Docs/03-团队/Agents/团队名册.md` 已按参与者更新最近任务和任务次数。
+- 对应成员档案仅在新增可复用经验时创建或更新。
 - 所有本波子代理状态已记录为 completed/closed，或说明例外原因。
 - 最终回复说明谁干了什么、产出了什么、验证了什么、哪些建议被采纳。
 
@@ -231,7 +233,7 @@ https://github.com/ZainDarcy/codex-team-kit-router
 python3 .codex/tools/check_template_integrity.py
 ```
 
-该脚本只做本地模板结构体检，不修改文件、不联网，也不代表 OpenAI/Codex 官方规则校验。需要确认当前官方行为时，应让 AI 先查当前 OpenAI Codex 官方文档，再更新模板。
+该脚本只做本地模板结构体检，不修改文件、不联网，也不代表 OpenAI/Codex 官方规则校验。它会检查路由、链接、`.DS_Store`、行业包选择值和部分运行态文档体量预算，但不会精确测量真实 prompt token。需要确认当前官方行为时，应让 AI 先查当前 OpenAI Codex 官方文档，再更新模板。
 
 ## 维护原则
 

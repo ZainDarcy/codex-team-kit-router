@@ -6,8 +6,8 @@ default_selection = "ask"
 
 [choices]
 none = "不加入游戏行业 agents。"
-game_basic = "加入基础游戏小队：game_designer, gameplay_engineer, ui_artist, playtest_researcher。"
-game_full = "加入完整游戏小队：本扩展包所有 agents。"
+game-basic = "加入基础游戏小队：game_designer, gameplay_engineer, ui_artist, playtest_researcher。"
+game-full = "加入完整游戏小队：本扩展包所有 agents。"
 custom = "按分组或单个 agent 选择。"
 
 [groups]
@@ -15,4 +15,3 @@ design = "策划：game_designer, combat_designer, balance_designer, level_desig
 engineering = "程序：gameplay_engineer, ui_engineer"
 art = "美术：game_art_director, ui_artist, technical_artist"
 validation = "验证：playtest_researcher"
-
