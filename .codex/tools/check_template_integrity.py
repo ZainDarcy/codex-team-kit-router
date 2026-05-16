@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 import sys
 import ast
+import json
 import os
 from pathlib import Path
 from urllib.parse import unquote
@@ -271,11 +272,17 @@ def required_paths() -> list[str]:
         "AGENTS.md",
         "README.md",
         "Docs/README.md",
+        ".codex/hooks.json",
+        ".codex/hooks/codex_workflow_hook.py",
+        ".codex/hooks/post-init",
+        ".codex/hooks/pre-final",
+        ".codex/hooks/pre-team-dispatch",
         ".githooks/pre-commit",
         ".githooks/pre-push",
         ".codex/config.toml",
         ".codex/team-kit.toml",
         ".codex/tools/check_template_integrity.py",
+        ".codex/tools/check_workflow_runtime.py",
         ".codex/team/dispatch-protocol.md",
         ".codex/team/model-routing.md",
         ".codex/team/public-file-lock.md",
@@ -512,6 +519,80 @@ def check_local_hooks() -> None:
     for hook_path in [ROOT / ".githooks/pre-commit", ROOT / ".githooks/pre-push"]:
         if not os.access(hook_path, os.X_OK):
             fail(f"{hook_path.relative_to(ROOT)} must be executable")
+
+    for hook_name in ["post-init", "pre-final", "pre-team-dispatch"]:
+        hook_path = ROOT / ".codex/hooks" / hook_name
+        text = hook_path.read_text(encoding="utf-8")
+        if "check_workflow_runtime.py" not in text or f"--gate {hook_name}" not in text:
+            fail(f".codex/hooks/{hook_name} must call check_workflow_runtime.py --gate {hook_name}")
+        if not os.access(hook_path, os.X_OK):
+            fail(f".codex/hooks/{hook_name} must be executable")
+
+
+def check_official_codex_hooks() -> None:
+    hooks_path = ROOT / ".codex/hooks.json"
+    try:
+        hooks = json.loads(hooks_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f".codex/hooks.json is invalid JSON: {exc}")
+
+    hook_map = hooks.get("hooks")
+    if not isinstance(hook_map, dict):
+        fail(".codex/hooks.json must have a top-level hooks object")
+
+    for event in ["SessionStart", "UserPromptSubmit", "PreToolUse", "PermissionRequest", "PostToolUse", "Stop"]:
+        groups = hook_map.get(event)
+        if not isinstance(groups, list) or not groups:
+            fail(f".codex/hooks.json missing hook event: {event}")
+        found_handler = False
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            for handler in group.get("hooks", []):
+                command = handler.get("command", "") if isinstance(handler, dict) else ""
+                if "codex_workflow_hook.py" in command and f"--event {event}" in command:
+                    found_handler = True
+                    if handler.get("type") != "command":
+                        fail(f".codex/hooks.json {event} handler must be type=command")
+                    if handler.get("timeout") != 30:
+                        fail(f".codex/hooks.json {event} handler must use timeout 30")
+        if not found_handler:
+            fail(f".codex/hooks.json {event} must call codex_workflow_hook.py --event {event}")
+
+    handler_path = ROOT / ".codex/hooks/codex_workflow_hook.py"
+    if not os.access(handler_path, os.X_OK):
+        fail(".codex/hooks/codex_workflow_hook.py must be executable")
+    text = handler_path.read_text(encoding="utf-8")
+    for phrase in [
+        "hookSpecificOutput",
+        "SessionStart",
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PermissionRequest",
+        "PostToolUse",
+        "Stop",
+        "additionalContext",
+        "permissionDecision",
+        "Team Assignment Map",
+        "pre-final",
+        "suppressOutput",
+    ]:
+        if phrase not in text:
+            fail(f".codex/hooks/codex_workflow_hook.py missing phrase: {phrase}")
+
+
+def check_workflow_runtime_checker() -> None:
+    text = (ROOT / ".codex/tools/check_workflow_runtime.py").read_text(encoding="utf-8")
+    for phrase in [
+        "pre-team-dispatch",
+        "post-init",
+        "pre-final",
+        "Team route requires [initialization].state = initialized",
+        "Team Assignment Map",
+        ".DS_Store",
+    ]:
+        if phrase not in text:
+            fail(f".codex/tools/check_workflow_runtime.py missing phrase: {phrase}")
 
 
 def check_no_stale_context_rules() -> None:
@@ -871,7 +952,9 @@ def main() -> None:
     check_markdown_links()
     check_agents_md_router()
     check_config()
+    check_official_codex_hooks()
     check_local_hooks()
+    check_workflow_runtime_checker()
     check_no_stale_context_rules()
     check_team_assignment_map_shape()
     check_public_lock_source()

@@ -36,7 +36,7 @@
 - 初始化前扫描 `.DS_Store`，若目标项目是 Git 仓库，建议 `.gitignore` 包含 `.DS_Store`。
 - 模板交付目录里的 `Docs/01-项目/项目进度.md` 是目标项目占位模板，不记录模板源仓库维护历史。
 - 合并和体检完成后删除 staging 目录；如果删除失败，必须在最终汇报中说明残留路径和原因。
-- 初始化完成报告必须落到 `Docs/03-团队/Agents/工作记录/YYYY-MM-DD-team-init.md`，并在最终回复中摘要说明。
+- 初始化完成报告必须落到 `Docs/03-团队/Agents/工作记录/YYYY-MM-DD-team-init.md`；信任项目 `.codex/` 后在 `/hooks` 审查 `.codex/hooks.json`，并运行或触发 `post-init`。
 
 ## 执行前判断
 
@@ -77,7 +77,7 @@
 
 Team 路由硬性阶段（已初始化项目）：
 
-1. 派发前输出 Team Assignment Map 和 Delegation Card。
+1. 派发前确认 `.codex/hooks.json` 已受信任；若未触发官方 hook，手动运行 `.codex/hooks/pre-team-dispatch`，再输出 Team Assignment Map 和 Delegation Card。
 2. 启动本波子代理。
 3. 等待本波全部完成，并记录所有本波子代理状态。
 4. 汇总建议和冲突点。
@@ -104,7 +104,7 @@ Team-lite / delta policy：
 - 工作记录必须包含 `_工作记录模板.md` 的核心标题，不能只写自由格式摘要。
 - 接入/初始化任务完成时，必须确认 staging 目录未残留在项目根目录。
 - 运行与改动范围匹配的验证；不能运行时说明原因和风险。
-- 最终回复优先说明结果、文件、验证、未验证项和残余风险。
+- 最终回复前依赖 `Stop` hook 或手动运行 `.codex/hooks/pre-final`；最终回复优先说明结果、文件、验证、未验证项和残余风险。
 - 最终回复必须包含团队贡献汇报，说明谁干了什么、产出了什么、哪些验证或建议进入最终交付。
 
 ## 团队贡献汇报

@@ -46,6 +46,7 @@
 
 - 是否已输出 Delegation Card。
 - 是否已输出 Team Assignment Map，并在派发前绑定成员身份、档案路径和工作记录路径。
+- 是否确认 `.codex/hooks.json` 已受信任；未触发官方 hook 时，是否手动运行 `.codex/hooks/pre-team-dispatch`。
 - 只读 / dry-run：不落盘，最终回复说明未沉淀原因。
 - 主线程实际执行但未派发：写 `main-thread` 工作记录。
 - 已启动子代理：落盘本波工作记录，按参与者更新团队名册；成员档案只在必要时更新。

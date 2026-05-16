@@ -73,6 +73,7 @@ project_progress_candidates = [
 paths = [
   "AGENTS.md",
   ".codex/config.toml",
+  ".codex/hooks.json",
   ".codex/team-kit.toml",
   "Docs/01-项目/项目规范.md",
   "Docs/01-项目/项目进度.md",
@@ -84,7 +85,9 @@ globs = [
   ".codex/agents/*.toml",
   ".codex/agent-packs/**/*.toml",
   ".codex/agent-packs/**/*.md",
+  ".codex/hooks/*",
   ".codex/team/*.md",
+  ".codex/tools/*.py",
   "Docs/03-团队/行业扩展包/*.md",
 ]
 

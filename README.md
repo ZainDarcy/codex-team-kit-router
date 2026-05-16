@@ -14,7 +14,7 @@
 
 - `AGENTS.md`：Codex 入口路由器，只放最短硬规则。
 - `Docs/`：项目文档、团队说明、初始化说明、成员档案和工作记录模板。
-- `.codex/`：Codex 运行配置、agent TOML、行业扩展包、派发协议和体检脚本。
+- `.codex/`：Codex 运行配置、agent TOML、行业扩展包、派发协议、官方 hooks、工作流脚本和体检脚本。
 - `.codex/agents/`：已经启用的 agent 定义。
 - `.codex/agent-packs/`：可选行业扩展包模板源，初始化选择后才复制到 `.codex/agents/`。
 
@@ -33,7 +33,7 @@ https://github.com/ZainDarcy/codex-team-kit-router
 4. 选择初始化模式；默认用团队就绪模式。Router-only 试接入不算团队初始化完成。
 5. 必须选择行业扩展包：none、game-basic、game-full 或 custom；不要默认偷偷加入。
 6. 按我的项目语言习惯随机给团队成员起真实人名，并初始化团队名册和成员档案。
-7. 按合并清单把需要的文件融入项目，运行模板体检，删除 staging 目录，再汇报真相源、改动文件、未生成/未迁移内容和 staging 清理结果。
+7. 按合并清单把需要的文件融入项目，安装 `.codex/hooks.json` 和 `.codex/hooks/`，运行体检，删除 staging 目录，再汇报真相源、改动文件、未生成/未迁移内容和 staging 清理结果。
 ```
 
 初始化完成后，普通任务可以直接说：
@@ -194,7 +194,7 @@ flowchart TD
 | 日常 Team | `Docs/02-执行/Team运行卡.md`，需要派发时再读 `.codex/team/dispatch-protocol.md` |
 | 团队初始化 | `Docs/03-团队/Agents/团队初始化.md`、`Docs/03-团队/行业扩展包/README.md`、`.codex/team-kit.toml` |
 | agent / 行业包调整 | `.codex/agents/`、`.codex/agent-packs/`、`.codex/team/model-routing.md`、`.codex/team/role-taxonomy.md` |
-| 本地体检 | `.codex/tools/check_template_integrity.py` |
+| 本地体检 | `.codex/tools/check_template_integrity.py`、`.codex/hooks.json`、`.codex/hooks/` |
 
 ## 团队任务必须产出什么
 
@@ -217,6 +217,8 @@ python3 .codex/tools/check_template_integrity.py
 ```
 
 该脚本只做本地模板结构体检，不修改文件、不联网，也不代表 OpenAI/Codex 官方规则校验。它会检查路由、链接、`.DS_Store`、行业包选择值和部分运行态文档体量预算，但不会精确测量真实 prompt token。需要确认当前官方行为时，应让 AI 先查当前 OpenAI Codex 官方文档，再更新模板。
+
+`.codex/hooks.json` 是 Codex 官方工作流 hook 配置，项目 `.codex/` 被信任后可在 `/hooks` 里审查启用；它覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`。`.codex/hooks/` 放 handler 与手动 fallback gate：初始化后运行 `post-init`，派发团队前运行 `pre-team-dispatch`，最终回复前运行 `pre-final`。
 
 本仓库还提供 repo-local `.githooks/`。在模板维护仓库中把 `core.hooksPath` 指向 `.githooks` 后，`pre-commit` 会自动运行体检和 `git diff --check`；`pre-push` 会追加体检脚本语法编译和 `.DS_Store` 扫描。
 

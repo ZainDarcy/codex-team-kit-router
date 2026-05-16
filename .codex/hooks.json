@@ -1,0 +1,80 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec /usr/bin/python3 \"$root/.codex/hooks/codex_workflow_hook.py\" --event SessionStart'",
+            "timeout": 30,
+            "statusMessage": "Loading team workflow guardrails"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec /usr/bin/python3 \"$root/.codex/hooks/codex_workflow_hook.py\" --event UserPromptSubmit'",
+            "timeout": 30,
+            "statusMessage": "Checking team workflow prompt"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec /usr/bin/python3 \"$root/.codex/hooks/codex_workflow_hook.py\" --event PreToolUse'",
+            "timeout": 30,
+            "statusMessage": "Checking workflow guardrail before tool use"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec /usr/bin/python3 \"$root/.codex/hooks/codex_workflow_hook.py\" --event PermissionRequest'",
+            "timeout": 30,
+            "statusMessage": "Checking approval request against workflow policy"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec /usr/bin/python3 \"$root/.codex/hooks/codex_workflow_hook.py\" --event PostToolUse'",
+            "timeout": 30,
+            "statusMessage": "Checking workflow follow-up"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec /usr/bin/python3 \"$root/.codex/hooks/codex_workflow_hook.py\" --event Stop'",
+            "timeout": 30,
+            "statusMessage": "Checking final workflow gate"
+          }
+        ]
+      }
+    ]
+  }
+}

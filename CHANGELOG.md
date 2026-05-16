@@ -8,6 +8,7 @@
 - Added Team Assignment Map as a required pre-dispatch identity gate so runtime threads bind to stable team members before spawning.
 - Added reinitialization / upgrade guidance that preserves existing member identities, history, and work logs while applying newer template rules.
 - Moved game-specific dispatch wording out of the global prompt template and into the game pack, reducing non-game context pollution.
+- Added official `.codex/hooks.json` Codex lifecycle hooks plus `.codex/hooks/` fallback gates for post-init, pre-team-dispatch, and pre-final checks.
 - Added a repo-local pre-commit hook that runs the local integrity check and whitespace diff check before template commits.
 - Added a repo-local pre-push hook with syntax compilation and `.DS_Store` checks for the final publish gate.
 - Reduced the daily `Team` route default read set to `Team运行卡.md`, with dispatch/model/public-lock docs loaded only when needed.
