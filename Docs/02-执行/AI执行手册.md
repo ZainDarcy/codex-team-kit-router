@@ -24,22 +24,26 @@
 
 - 用户提供 GitHub 地址时，先拉取到 staging 目录；禁止直接 clone/解压到目标项目根目录并长期保留。
 - staging 优先放在项目根目录外；若临时放在项目内，使用 `_codex-team-kit-router-staging/` 并在完成后删除。
+- 合并前保存回退入口：优先确认 Git 分支/提交点；否则记录文件清单快照和可撤回路径。
 - 确认唯一 `docs_root`，例如 `Docs/` 或 `docs/`，并同步写入 `.codex/team-kit.toml`。
 - 确认真相源策略：采用已有项目规范/项目进度、迁移到推荐路径，或创建只含链接的索引页。
 - 同类真相源只能有一个；不要让根目录、文档根目录和 `01-项目/` 同时保存同义内容。
-- 按用户目标选择最小模式、团队就绪模式或完整模式。
+- 按用户目标选择 Router-only 试接入、团队就绪模式或完整模式。
 - 必须选择行业扩展包：`none`、`game-basic`、`game-full` 或 `custom`；未选择的扩展包不得复制到 `.codex/agents/`。
 - 初始化前扫描 `.DS_Store`，若目标项目是 Git 仓库，建议 `.gitignore` 包含 `.DS_Store`。
 - 模板仓库自身的 `Docs/01-项目/项目进度.md` 只记录模板占位/示例状态，不写入目标项目的执行历史。
 - 合并和体检完成后删除 staging 目录；如果删除失败，必须在最终汇报中说明残留路径和原因。
+- 初始化完成报告必须落到 `Docs/03-团队/Agents/工作记录/YYYY-MM-DD-team-init.md`，并在最终回复中摘要说明。
 
 ## 执行前判断
 
 每次准备修改前，主线程必须先完成：
 
 - 列出预计涉及文件。
-- 判断任务应走 `Quick`、`Project`、`Team`、`Team-Init`、`Review` 或 `Agent-Setup` 路由。
-- 如果走 `Team-Init` 或 `Agent-Setup`，先确认 `Docs/03-团队/Agents/团队初始化.md` 已执行；若未执行，先随机起名并创建团队名册和成员档案。
+- 判断任务应走 `Quick`、`Project`、`Team`、`Team-Init`、`Review`、`Agent-Setup` 或 `Template-Maintenance` 路由。
+- 如果在本 kit 源仓库维护模板，走 `Template-Maintenance` 或 `Agent-Setup`，不得执行目标项目团队初始化。
+- 如果在目标项目走 `Team`，先确认 `.codex/team-kit.toml` 的 `[initialization].state` 为 `initialized` 且 `Docs/03-团队/Agents/团队名册.md` 不再是 `pending`；否则切回 `Team-Init`。
+- 如果在目标项目走 `Team-Init`，先执行 `Docs/03-团队/Agents/团队初始化.md`，随机起名并创建团队名册和成员档案。
 - 如果 `.codex/team-kit.toml` 与实际目录不一致，先修正配置或向用户说明冲突，不继续扩大改动。
 - 如果项目选择了行业扩展包，确认被选中的 agent 已从 `.codex/agent-packs/` 合并到 `.codex/agents/`，未选中的扩展包不进入团队名册。
 - 团队成员显示名应匹配目标项目用户的主要语言，使用自然、好记的人名；机器字段 `name` 保持英文稳定。
@@ -86,6 +90,7 @@ Team-lite / delta policy：
 - 成员档案只在出现“新增可复用经验”时更新，不做每轮机械改写。
 - 团队名册每波只做轻量更新：参与者最近任务、任务次数、在岗/停用、职责变化和可用性变化；不得整篇重写。
 - 初始化信息、迁移细节、扩展包选择仅在 `Team-Init` 路由处理，不作为日常 Team 默认读取项。
+- 只读 / dry-run 且未启动子代理、未改文件时，不落盘团队记录；最终回复说明未沉淀原因。
 
 ## 执行后同步
 

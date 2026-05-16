@@ -4,6 +4,12 @@
 
 这套模板适合已经有项目文档、项目进度、`AGENTS.md` / `AGENT.md` 或 `.codex/` 的项目。接入时必须先放到临时 staging 目录，探测目标项目后按清单合并，完成体检后删除 staging，避免把模板仓库直接塞进项目根目录。
 
+## 30 秒接入
+
+1. 复制仓库地址：`https://github.com/ZainDarcy/codex-team-kit-router`
+2. 把下方“推荐接入方式”里的 prompt 发给目标项目里的 AI，不要自己在终端把仓库直接 clone 到项目根目录。
+3. 等 AI 给出初始化完成报告，检查：staging 已删除、团队名册和成员档案已创建、行业包选择已说明、rollback 入口已保留。
+
 ## 一句话理解
 
 - `AGENTS.md`：Codex 入口路由器，只放最短硬规则。
@@ -24,7 +30,7 @@ https://github.com/ZainDarcy/codex-team-kit-router
 1. 不要把模板仓库直接拉到项目根目录；先新建临时 staging 目录拉取模板，优先放在项目根目录外。
 2. 先探测目标项目已有 AGENTS.md、AGENT.md、docs/Docs、项目规范、项目进度和 .codex/，不要直接覆盖。
 3. 在 .codex/team-kit.toml 里确定 docs_root、项目规范、项目进度、团队目录、公共文件清单和 staging 策略。
-4. 选择初始化模式；默认用团队就绪模式。
+4. 选择初始化模式；默认用团队就绪模式。Router-only 试接入不算团队初始化完成。
 5. 必须选择行业扩展包：none、game-basic、game-full 或 custom；不要默认偷偷加入。
 6. 按我的项目语言习惯随机给团队成员起真实人名，并初始化团队名册和成员档案。
 7. 按合并清单把需要的文件融入项目，运行模板体检，删除 staging 目录，再汇报真相源、改动文件、未生成/未迁移内容和 staging 清理结果。
@@ -47,6 +53,12 @@ https://github.com/ZainDarcy/codex-team-kit-router
 ```text
 先给我一版子代理分工方案，不要执行：...
 ```
+
+什么时候不用团队流程：
+
+- 小问答、小检查、小修复：用轻量模式。
+- 只想要方案：用“只规划分工，不执行”。
+- 跨模块、高风险、需要审查或并行工作：再用团队流程。
 
 ## 工作流程总览
 
@@ -81,8 +93,8 @@ https://github.com/ZainDarcy/codex-team-kit-router
 
 | 模式 | 适合场景 | 会生成什么 |
 | --- | --- | --- |
-| 最小模式 | 只想先接入 Router 和基础规则 | `AGENTS.md`、核心 `.codex/`、公共写锁、派发协议、体检脚本；首次 Team 路由前再补团队档案 |
-| 团队就绪模式 | 推荐默认，准备正常使用团队流程 | 最小模式内容，加团队名册和核心 agent 成员档案；不创建虚假的初始工作记录 |
+| Router-only 试接入 | 只想先接入 Router 和基础规则，不算团队初始化完成 | `AGENTS.md`、核心 `.codex/`、公共写锁、派发协议、体检脚本；首次 Team 路由前必须再补团队档案 |
+| 团队就绪模式 | 推荐默认，准备正常使用团队流程 | Router 基础内容，加团队名册和核心 agent 成员档案；不创建虚假的初始工作记录 |
 | 完整模式 | 长期项目，需要完整团队沉淀 | 团队就绪模式内容，加交付模板和完整团队文档结构 |
 
 初始化报告必须说明采用哪种模式。
@@ -95,10 +107,10 @@ https://github.com/ZainDarcy/codex-team-kit-router
 
 | 选择 | 含义 |
 | --- | --- |
-| `none` | 不加入任何行业扩展包 |
-| `game-basic` | 加入基础游戏小队：`game_designer`、`gameplay_engineer`、`ui_artist`、`playtest_researcher` |
-| `game-full` | 加入完整游戏小队：策划、程序、美术、验证全部分组 |
-| `custom` | 按分组或单个 agent 选择 |
+| `none` | 非垂直项目或暂不需要行业专家时使用 |
+| `game-basic` | 游戏原型、早期玩法验证时推荐；加入 `game_designer`、`gameplay_engineer`、`ui_artist`、`playtest_researcher` |
+| `game-full` | 长期游戏项目推荐；加入策划、程序、美术、验证全部分组 |
+| `custom` | 已明确只需要某些岗位时使用，例如只加战斗策划、数值策划和 UI |
 
 游戏行业包分组：
 
@@ -117,10 +129,11 @@ https://github.com/ZainDarcy/codex-team-kit-router
 | --- | --- | --- |
 | `Quick` | 简单问答、小检查、无需改动 | `AGENTS.md` 和用户点名文件 |
 | `Project` | 普通实现、规划、局部修复、文档更新 | 项目规范、项目进度、AI 执行手册 |
-| `Team` | 已初始化项目的日常团队流程、子代理、并行 agent | 开发团队、AI 执行手册、Team 运行卡、派发协议、模型路由、公共写锁 |
+| `Team` | 已初始化项目的日常团队流程、子代理、并行 agent | Team 运行卡，再按卡片追加调度文件 |
 | `Team-Init` | 团队初始化、模板接入、迁移、扩展包选择 | 团队初始化、行业扩展包、开发团队、AI 执行手册、工程结构与文档路由、派发协议 |
 | `Review` | 审查、QA、安全、回归、验收 | AI 执行手册、公共写锁、QA 模板 |
 | `Agent-Setup` | 搭建或调整团队模板、agent 定义、行业包 | 角色分类、模型路由、公共写锁、agent TOML、行业扩展包 |
+| `Template-Maintenance` | 维护本 kit 源仓库、README、体检脚本或模板发布 | `.codex/team-kit.toml`、工程结构与文档路由和相关模板文件 |
 
 ## 文件说明
 

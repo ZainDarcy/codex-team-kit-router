@@ -2,6 +2,8 @@
 
 ## 通用模板
 
+公共文件清单以 `.codex/team-kit.toml` 的 `[public_files]` 为源；以下禁止路径是派发时渲染出的执行边界。
+
 ```text
 你是本项目的 {agent_name} 子代理，实例名 {nickname}。
 

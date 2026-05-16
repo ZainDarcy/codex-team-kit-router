@@ -22,19 +22,29 @@ forbidden_final_dirs = [
 ]
 
 [paths]
+project_entry = "AGENTS.md"
+legacy_agent_doc = "AGENT.md"
 docs_root = "Docs"
 project_spec = "Docs/01-项目/项目规范.md"
 project_progress = "Docs/01-项目/项目进度.md"
 execution_manual = "Docs/02-执行/AI执行手册.md"
+ai_workflow = "Docs/02-执行/AI执行手册.md"
 routing_doc = "Docs/02-执行/工程结构与文档路由.md"
 team_run_card = "Docs/02-执行/Team运行卡.md"
 team_doc = "Docs/03-团队/开发团队.md"
+team_dir = "Docs/03-团队"
 agent_root = "Docs/03-团队/Agents"
 agent_pack_root = ".codex/agent-packs"
 team_init = "Docs/03-团队/Agents/团队初始化.md"
 team_roster = "Docs/03-团队/Agents/团队名册.md"
 member_profile_template = "Docs/03-团队/Agents/成员档案/_成员档案模板.md"
 work_log_template = "Docs/03-团队/Agents/工作记录/_工作记录模板.md"
+init_report_dir = "Docs/03-团队/Agents/工作记录"
+
+[initialization]
+state = "template-source"
+team_ready_required_for_team_route = true
+status_file = "Docs/03-团队/Agents/团队名册.md"
 
 [install_modes]
 minimal = "只接入 Router、公共文件写锁、派发协议、核心 agents 和体检脚本；第一次 Team 路由前再初始化成员档案。"

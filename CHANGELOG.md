@@ -1,5 +1,13 @@
 # Changelog
 
+## Workflow Context Iteration
+
+- Reduced the daily `Team` route default read set to `Team运行卡.md`, with dispatch/model/public-lock docs loaded only when needed.
+- Added `Template-Maintenance` guidance so maintaining this kit source repo does not trigger target-project team initialization.
+- Added Router-only trial wording, initialization report requirements, merge decision rules, rollback requirements, and industry-pack choice guidance.
+- Clarified read-only / dry-run exceptions so no team records are written when no subagents run and no files change.
+- Added template-local checks for initialization config, Team route slimness, Template-Maintenance routing, and public-file source wording.
+
 ## Industry Packs And Staging Init
 
 - Added a required staging-based initialization protocol: clone/download the template into a temporary staging directory, merge selected files into the target project, then delete staging.
@@ -12,7 +20,7 @@
 
 - Added `.codex/team-kit.toml` for `docs_root`, truth-source paths, public file locks, and install modes.
 - Updated initialization flow to probe target projects before copying, avoid `Docs`/`docs` drift, and prevent duplicate project spec/progress truth sources.
-- Added minimal, team-ready, and full initialization modes.
+- Added Router-only trial, team-ready, and full initialization modes.
 - Strengthened Team route gating: Delegation Card first, wait for all subagents, then public file updates.
 - Made the integrity check configuration-driven and added checks for `.DS_Store`, duplicate truth sources, path drift, work-log headings, and cross-project absolute paths.
 

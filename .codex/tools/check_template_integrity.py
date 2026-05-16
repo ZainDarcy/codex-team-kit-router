@@ -22,7 +22,7 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / ".codex/team-kit.toml"
 
-ROUTES = ["Quick", "Project", "Team", "Team-Init", "Review", "Agent-Setup"]
+ROUTES = ["Quick", "Project", "Team", "Team-Init", "Review", "Agent-Setup", "Template-Maintenance"]
 
 DISPATCH_PHRASES = [
     "Delegation Card",
@@ -193,6 +193,26 @@ def configured_public_files() -> list[str]:
     return [str(path) for path in [*paths, *globs]]
 
 
+def check_initialization_config() -> None:
+    for key in [
+        "project_entry",
+        "legacy_agent_doc",
+        "docs_root",
+        "project_spec",
+        "project_progress",
+        "ai_workflow",
+        "team_dir",
+        "init_report_dir",
+    ]:
+        cfg_path(key)
+    if cfg("initialization", "state") != "template-source":
+        fail(".codex/team-kit.toml [initialization].state must be template-source in the template repo")
+    if cfg("initialization", "team_ready_required_for_team_route") is not True:
+        fail(".codex/team-kit.toml must require team-ready state before Team route")
+    if cfg("initialization", "status_file") != cfg_path("team_roster"):
+        fail(".codex/team-kit.toml [initialization].status_file must match team_roster")
+
+
 def required_paths() -> list[str]:
     required = [
         "AGENTS.md",
@@ -360,6 +380,8 @@ def check_agents_md_router() -> None:
     team_route_line = next((line for line in text.splitlines() if line.startswith("| `Team` |")), "")
     if cfg_path("team_init") in team_route_line or "行业扩展包/README.md" in team_route_line:
         fail("AGENTS.md Team route must not load initialization or industry-pack docs")
+    if ".codex/team/" in team_route_line or "Docs/03-团队/开发团队.md" in team_route_line:
+        fail("AGENTS.md Team route should only point to the Team run card by default")
     for route in ROUTES:
         if route not in text:
             fail(f"AGENTS.md missing route: {route}")
@@ -388,6 +410,8 @@ def check_config() -> None:
 def check_public_lock_source() -> None:
     lock_doc = (ROOT / ".codex/team/public-file-lock.md").read_text(encoding="utf-8")
     prompt_template = (ROOT / ".codex/team/spawn-prompt-templates.md").read_text(encoding="utf-8")
+    if ".codex/team-kit.toml" not in lock_doc or "[public_files]" not in lock_doc:
+        fail(".codex/team/public-file-lock.md must state that team-kit.toml [public_files] is the source")
     for path in configured_public_files():
         if path not in lock_doc:
             fail(f".codex/team/public-file-lock.md missing public file: {path}")
@@ -537,7 +561,7 @@ def check_team_docs() -> None:
             fail(f"{cfg_path('execution_manual')} missing phrase: {phrase}")
 
     run_card = (ROOT / cfg_path("team_run_card")).read_text(encoding="utf-8")
-    for phrase in ["已初始化项目", "默认不读取", "Team-Init", "按参与者更新最近任务和任务次数"]:
+    for phrase in ["已初始化项目", "默认不读取", "Team-Init", "按参与者更新最近任务和任务次数", "只读 / dry-run"]:
         if phrase not in run_card:
             fail(f"{cfg_path('team_run_card')} missing phrase: {phrase}")
 
@@ -555,6 +579,8 @@ def check_team_docs() -> None:
         fail(f"{cfg_path('routing_doc')} Team route must include Team run card")
     if cfg_path("team_init") not in routing_doc:
         fail(f"{cfg_path('routing_doc')} Team-Init route must include team initialization")
+    if "不执行目标项目团队初始化" not in routing_doc:
+        fail(f"{cfg_path('routing_doc')} missing Template-Maintenance source-repo boundary")
 
     init_doc = (ROOT / cfg_path("team_init")).read_text(encoding="utf-8")
     for phrase in [
@@ -564,10 +590,13 @@ def check_team_docs() -> None:
         "不使用本模板文档中的示例名作为固定输出",
         "探测目标项目",
         "staging",
-        "最小模式",
+        "Router-only 试接入",
         "完整模式",
         "game-basic",
         "game-full",
+        "已有文件合并决策表",
+        "初始化完成报告模板",
+        "rollback",
     ]:
         if phrase not in init_doc:
             fail(f"{cfg_path('team_init')} missing phrase: {phrase}")
@@ -615,10 +644,13 @@ def check_readme_routes() -> None:
     if "团队初始化" in team_route_line or "行业扩展包" in team_route_line:
         fail("README.md Team route must not tell users to load initialization or industry-pack docs")
     for phrase in [
+        "30 秒接入",
         "Team 运行卡",
         "团队初始化",
         "按参与者更新团队名册",
         "新增可复用经验",
+        "Router-only 试接入",
+        "什么时候不用团队流程",
     ]:
         if phrase not in readme:
             fail(f"README.md missing workflow phrase: {phrase}")
@@ -638,6 +670,7 @@ def check_runtime_context_budget() -> None:
 def main() -> None:
     check_required_paths()
     check_docs_root_case()
+    check_initialization_config()
     check_truth_sources()
     check_no_ds_store()
     check_no_forbidden_staging_dirs()

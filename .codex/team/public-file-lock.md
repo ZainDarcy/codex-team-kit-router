@@ -1,5 +1,7 @@
 # 公共文件写锁
 
+本文件是 `.codex/team-kit.toml` 中 `[public_files]` 的人类可读镜像。改公共文件清单时，先改 `.codex/team-kit.toml`，再同步本文件、派发 prompt 和 agent 指令。
+
 ## 只能主线程修改的文件
 
 - `AGENTS.md`
