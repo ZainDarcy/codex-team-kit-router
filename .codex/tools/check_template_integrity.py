@@ -485,7 +485,7 @@ def check_agents_md_router() -> None:
     for route in ROUTES:
         if route not in text:
             fail(f"AGENTS.md missing route: {route}")
-    for phrase in ["Router Only", "路由表", "公共文件写锁", "子代理触发门槛"]:
+    for phrase in ["Router Only", "路由表", "公共文件写锁", "子代理触发门槛", "Team + Implementation-Plan"]:
         if phrase not in text:
             fail(f"AGENTS.md missing router phrase: {phrase}")
     if cfg_path("team_run_card") not in text:
@@ -603,6 +603,7 @@ def check_workflow_runtime_checker() -> None:
         "implementation_ready_status_values",
         "批准执行",
         "No implementation plan package",
+        "Approved implementation plan must record Team route evidence",
         "Team route requires [initialization].state = initialized",
         "Team Assignment Map",
         ".DS_Store",
@@ -824,6 +825,7 @@ def check_team_docs() -> None:
         "Team Assignment Map",
         "按参与者更新最近任务和任务次数",
         "中大型迭代方案门禁",
+        "Team + Implementation-Plan",
         "批准执行",
         "pre-implementation",
     ]:
@@ -836,7 +838,7 @@ def check_team_docs() -> None:
             fail(f"{cfg_path('implementation_plan_root')}/README.md missing phrase: {phrase}")
 
     run_card = (ROOT / cfg_path("team_run_card")).read_text(encoding="utf-8")
-    for phrase in ["已初始化项目", "默认不读取", "Team-Init", "Team Assignment Map", "按参与者更新最近任务和任务次数", "只读 / dry-run"]:
+    for phrase in ["已初始化项目", "默认不读取", "Team-Init", "Team + Implementation-Plan", "Team Assignment Map", "按参与者更新最近任务和任务次数", "只读 / dry-run"]:
         if phrase not in run_card:
             fail(f"{cfg_path('team_run_card')} missing phrase: {phrase}")
 
@@ -852,6 +854,8 @@ def check_team_docs() -> None:
         fail(f"{cfg_path('routing_doc')} Team section must not load initialization or industry-pack docs")
     if cfg_path("team_run_card") not in routing_doc:
         fail(f"{cfg_path('routing_doc')} Team route must include Team run card")
+    if "Team + Implementation-Plan" not in routing_doc:
+        fail(f"{cfg_path('routing_doc')} must route M/L work to Team + Implementation-Plan")
     if cfg_path("team_init") not in routing_doc:
         fail(f"{cfg_path('routing_doc')} Team-Init route must include team initialization")
     init_doc = (ROOT / cfg_path("team_init")).read_text(encoding="utf-8")
@@ -927,6 +931,7 @@ def check_readme_routes() -> None:
         "30 秒接入",
         "Team 运行卡",
         "Team Assignment Map -> Delegation Card",
+        "Team + Implementation-Plan",
         "团队初始化",
         "按参与者更新团队名册",
         "新增可复用经验",

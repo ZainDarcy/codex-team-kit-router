@@ -195,6 +195,19 @@ def has_approved_scope(text: str) -> bool:
     return False
 
 
+def has_team_route_evidence(text: str) -> bool:
+    return any(
+        phrase in text
+        for phrase in [
+            "Team + Implementation-Plan",
+            "Team Assignment Map",
+            "Delegation Card",
+            "团队讨论",
+            "团队触发依据",
+        ]
+    )
+
+
 def check_pre_implementation_ready() -> None:
     if cfg("planning_gate", "required_for_medium_large", True) is not True:
         return
@@ -210,11 +223,17 @@ def check_pre_implementation_ready() -> None:
     if not candidates:
         fail(f"No implementation plan package found under {plan_root_rel}")
 
-    approved = [path for path in candidates if has_approved_scope(path.read_text(encoding="utf-8"))]
+    approved_texts = [(path, path.read_text(encoding="utf-8")) for path in candidates]
+    approved = [(path, text) for path, text in approved_texts if has_approved_scope(text)]
     if not approved:
         fail(
             "No approved implementation scope found. Mark the plan with "
             "`批准执行：<方案名/版本>` or an approved status before writing runtime code."
+        )
+    if not any(has_team_route_evidence(text) for _, text in approved):
+        fail(
+            "Approved implementation plan must record Team route evidence before runtime writes: "
+            "Team + Implementation-Plan, Team Assignment Map, Delegation Card, or 团队讨论."
         )
 
 

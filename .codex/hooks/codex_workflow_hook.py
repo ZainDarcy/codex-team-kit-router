@@ -120,8 +120,8 @@ def hook_context_for_prompt(prompt: str) -> str | None:
         )
     if any(marker in prompt for marker in PLAN_PROMPT_MARKERS):
         return (
-            "Planning gate reminder: medium/large iterations need a scoped plan, explicit "
-            "approval for that scope, then pre-implementation before runtime writes."
+            "Planning gate reminder: medium/large iterations enter Team + Implementation-Plan: "
+            "discuss, approve scope, then run pre-implementation before runtime writes."
         )
     if any(marker in prompt for marker in ["团队", "子代理", "并行", "agent", "Team"]):
         return (
