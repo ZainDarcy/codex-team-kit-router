@@ -1,22 +1,13 @@
 # 公共文件写锁
 
-本文件是 `.codex/team-kit.toml` 中 `[public_files]` 的人类可读镜像。改公共文件清单时，先改 `.codex/team-kit.toml`，再同步本文件、派发 prompt 和 agent 指令。
+本文件说明公共文件写锁的执行规则。公共文件清单的唯一事实源是 `.codex/team-kit.toml` 的 `[public_files]`，这里不再手工复制完整清单。
 
 ## 只能主线程修改的文件
 
-- `AGENTS.md`
-- `Docs/01-项目/项目规范.md`
-- `Docs/01-项目/项目进度.md`
-- `Docs/03-团队/开发团队.md`
-- `Docs/02-执行/AI执行手册.md`
-- `Docs/02-执行/工程结构与文档路由.md`
-- `.codex/config.toml`
-- `.codex/team-kit.toml`
-- `.codex/agents/*.toml`
-- `.codex/agent-packs/**/*.toml`
-- `.codex/agent-packs/**/*.md`
-- `.codex/team/*.md`
-- `Docs/03-团队/行业扩展包/*.md`
+- Codex 主线程在派发前读取 `.codex/team-kit.toml` 的 `[public_files].paths` 和 `[public_files].globs`。
+- 主线程把读取结果渲染进 Delegation Card 和子代理 prompt 的“禁止修改路径”。
+- 子代理不得修改渲染出的任何公共文件或匹配公共 globs 的文件。
+- 如果目标项目初始化时改了 `docs_root` 或真相源路径，必须先更新 `.codex/team-kit.toml`，再渲染公共文件禁止清单。
 
 ## 子代理可以写的文件
 
@@ -31,10 +22,7 @@
 - 不修改公共文件。
 - 不修改其他子代理的工作记录。
 - 不修改其他子代理的成员档案。
-- 不创建或修改 `.codex/agents/*.toml`。
-- 不创建或修改 `.codex/agent-packs/` 中的扩展包模板。
-- 不修改 `.codex/config.toml`。
-- 不修改 `.codex/team-kit.toml`。
+- 不创建或修改 `.codex/team-kit.toml` `[public_files]` 渲染出的公共路径。
 - 不启动下一层子代理。
 
 ## 建议回写机制

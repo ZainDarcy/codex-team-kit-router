@@ -43,6 +43,8 @@ init_report_dir = "Docs/03-团队/Agents/工作记录"
 
 [initialization]
 state = "template-source"
+install_mode = "template-source"
+template_version_applied = ""
 team_ready_required_for_team_route = true
 status_file = "Docs/03-团队/Agents/团队名册.md"
 
@@ -88,8 +90,15 @@ globs = [
 
 [checks]
 max_agents_md_lines = 150
+max_readme_lines = 240
+max_ai_manual_lines = 140
 max_team_run_card_lines = 80
+max_routing_doc_lines = 180
+max_team_doc_lines = 180
+max_public_file_lock_lines = 80
+max_team_init_lines = 220
 max_dispatch_protocol_lines = 180
+max_spawn_prompt_templates_lines = 120
 forbidden_absolute_path_fragments = [
   "/Users/",
   "/home/",

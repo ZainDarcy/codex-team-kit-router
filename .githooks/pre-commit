@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+python3 .codex/tools/check_template_integrity.py
+git diff --check

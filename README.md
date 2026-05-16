@@ -8,7 +8,7 @@
 
 1. 复制仓库地址：`https://github.com/ZainDarcy/codex-team-kit-router`
 2. 把下方“推荐接入方式”里的 prompt 发给目标项目里的 AI，不要自己在终端把仓库直接 clone 到项目根目录。
-3. 等 AI 给出初始化完成报告，检查：staging 已删除、团队名册和成员档案已创建、行业包选择已说明、rollback 入口已保留。
+3. 等 AI 给出初始化或重新初始化报告，检查：staging 已删除、成员身份已保留或创建、行业包选择已说明、rollback 入口已保留。
 
 ## 一句话理解
 
@@ -64,15 +64,53 @@ https://github.com/ZainDarcy/codex-team-kit-router
 
 ```text
 用户需求
-  -> AGENTS.md 判断路由
-  -> 按路由读取 Docs/ 和 .codex/team/ 中的必要文件
-  -> 如需日常团队流程，读取 Team 运行卡；如团队未初始化，切到 Team-Init
-  -> 输出 Delegation Card
-  -> 派发子代理，子代理只拿压缩上下文包
-  -> 等待本波子代理全部完成
-  -> 主线程整合、验证、更新公共文件
-  -> 落盘本波工作记录，按参与者更新团队名册，必要时更新成员档案
-  -> 向用户汇报谁做了什么、产出了什么、验证了什么
+├─ 小问答 / 小检查
+│  └─ Quick：只读 AGENTS.md 和用户点名文件
+├─ 普通实现 / 文档更新 / 局部修复
+│  └─ Project：读取项目规范、项目进度、AI 执行手册
+├─ 首次接入 / 重新初始化 / 迁移 / 行业包选择
+│  └─ Team-Init：staging 拉取 -> 探测目标项目 -> 合并清单 -> 初始化或升级团队 -> 删除 staging
+├─ 已初始化项目里的团队任务
+│  └─ Team：先读 Team运行卡
+│      ├─ 不需要派发：主线程轻量处理
+│      └─ 需要派发：Team Assignment Map -> Delegation Card -> 子代理压缩上下文 -> 等待完成 -> 主线程整合
+├─ 审查 / QA / 安全 / 回归
+│  └─ Review：读差异、验证结果和 QA 模板
+└─ 搭建 / 调整 agent / 行业包
+   └─ Agent-Setup：读角色、模型、公共写锁和相关 TOML
+```
+
+```mermaid
+flowchart TD
+    A["用户需求"] --> B{"先判断路由"}
+    B -->|"小问答/小检查"| Q["Quick"]
+    B -->|"普通实现/文档更新"| P["Project"]
+    B -->|"首次接入/迁移/行业包"| I["Team-Init"]
+    B -->|"已初始化项目的团队任务"| T["Team"]
+    B -->|"审查/QA/安全"| R["Review"]
+    B -->|"搭建/调整 agent 或行业包"| S["Agent-Setup"]
+
+    I --> I1["staging 拉取模板"]
+    I1 --> I2["探测 AGENTS/AGENT/docs/.codex"]
+    I2 --> I3["选择初始化模式和行业包"]
+    I3 --> I4["合并到目标项目并生成初始化报告"]
+    I4 --> I5["删除 staging"]
+
+    T --> T1["读取 Team运行卡"]
+    T1 --> T2{"需要子代理?"}
+    T2 -->|"否"| T3["主线程轻量处理"]
+    T2 -->|"是"| T4["Team Assignment Map + Delegation Card"]
+    T4 --> T5["子代理只接收压缩上下文"]
+    T5 --> T6["等待本波完成"]
+    T6 --> T7["主线程整合/验证/回写"]
+
+    Q --> Z["最终汇报"]
+    P --> Z
+    R --> Z
+    S --> Z
+    T3 --> Z
+    T7 --> Z
+    I5 --> Z
 ```
 
 ## 非侵入式 Staging 接入
@@ -123,6 +161,16 @@ https://github.com/ZainDarcy/codex-team-kit-router
 
 未选择的扩展包只保留在 `.codex/agent-packs/` 作为模板源，不进入 `.codex/agents/`、团队名册或成员档案。
 
+游戏项目示例：
+
+```text
+当前项目是早期 Web 游戏原型，接入时选择 game-basic。初始化后先按玩法原型派发模板做一轮评估：策划、玩法工程、UI 视觉和试玩验收分别给建议，主线程最后合成迭代计划，不要直接实现。
+```
+
+```text
+评估是否需要 Unity/Cocos 迁移，选择 custom，只启用必要的设计、工程和技术美术视角。先区分代码优先、编辑器依赖、资源管线和迁移成本，不要直接建议迁移。
+```
+
 ## 路由类型
 
 | 路由 | 适用场景 | 主要读取 |
@@ -130,113 +178,35 @@ https://github.com/ZainDarcy/codex-team-kit-router
 | `Quick` | 简单问答、小检查、无需改动 | `AGENTS.md` 和用户点名文件 |
 | `Project` | 普通实现、规划、局部修复、文档更新 | 项目规范、项目进度、AI 执行手册 |
 | `Team` | 已初始化项目的日常团队流程、子代理、并行 agent | Team 运行卡，再按卡片追加调度文件 |
-| `Team-Init` | 团队初始化、模板接入、迁移、扩展包选择 | 团队初始化、行业扩展包、开发团队、AI 执行手册、工程结构与文档路由、派发协议 |
+| `Team-Init` | 团队初始化、重新初始化、模板接入、迁移、扩展包选择 | 团队初始化、`.codex/team-kit.toml`，再按需读取行业包和派发协议 |
 | `Review` | 审查、QA、安全、回归、验收 | AI 执行手册、公共写锁、QA 模板 |
 | `Agent-Setup` | 搭建或调整团队模板、agent 定义、行业包 | 角色分类、模型路由、公共写锁、agent TOML、行业扩展包 |
-| `Template-Maintenance` | 维护本 kit 源仓库、README、体检脚本或模板发布 | `.codex/team-kit.toml`、工程结构与文档路由和相关模板文件 |
 
-## 文件说明
+## 关键文件
 
-### 根目录
+详细目录树见 `Docs/README.md`。日常不要把下面文件一次性全读进上下文，按路由取用：
 
-| 文件 | 作用 |
+| 场景 | 优先读 |
 | --- | --- |
-| `AGENTS.md` | Codex 的瘦入口。只保留路由表、公共文件写锁摘要、子代理触发门槛和最终交付要求 |
-| `README.md` | 面向人类使用者的总说明，解释接入方式、目录职责和工作流程 |
-| `CHANGELOG.md` | 模板变更记录 |
-| `.gitignore` | 忽略 `.DS_Store`、缓存、依赖、临时 staging 目录等 |
-
-### `Docs/`
-
-`Docs/` 是文档层，给人和 Codex 主线程按需阅读，也保存团队沉淀记录。
-
-| 路径 | 作用 |
-| --- | --- |
-| `Docs/README.md` | `Docs/` 导航，说明文档分层和读取原则 |
-| `Docs/01-项目/项目规范.md` | 目标项目的稳定规范模板，记录长期不频繁变化的约束 |
-| `Docs/01-项目/项目进度.md` | 目标项目的动态进度模板，记录当前状态、已完成事项、阻塞和下一步 |
-| `Docs/02-执行/AI执行手册.md` | 主线程执行流程，包含执行前判断、何时问用户、子代理派发、验证和最终汇报 |
-| `Docs/02-执行/工程结构与文档路由.md` | Quick / Project / Team / Team-Init / Review / Agent-Setup 路由的文档导航 |
-| `Docs/02-执行/Team运行卡.md` | 已初始化项目的日常 Team 轻量运行规则，避免每次读取初始化和迁移文档 |
-| `Docs/03-团队/开发团队.md` | 团队结构、默认核心小队、行业扩展选择、执行流程、验收门禁和团队沉淀规则 |
-| `Docs/03-团队/行业扩展包/README.md` | 行业扩展包说明，当前包含游戏行业包和选择方式 |
-
-### `Docs/03-团队/Agents/`
-
-这里保存团队初始化和团队沉淀，不保存真正的 agent TOML 配置。
-
-| 路径 | 作用 |
-| --- | --- |
-| `Docs/03-团队/Agents/团队初始化.md` | 初始化协议。规定 staging 接入、目标项目探测、初始化模式、行业扩展包选择、随机起名和建档 |
-| `Docs/03-团队/Agents/团队名册.md` | 团队成员轻量索引。模板内是 `pending`，目标项目初始化后由 AI 填入真实随机人名 |
-| `Docs/03-团队/Agents/成员档案/_成员档案模板.md` | 成员档案模板。初始化时为每个启用 agent 生成具体档案 |
-| `Docs/03-团队/Agents/工作记录/_工作记录模板.md` | 工作记录模板。每次 Team 路由或启用子代理后要落盘记录 |
-| `Docs/03-团队/Agents/交付模板/策划交付模板.md` | 策划类 agent 的交付结构 |
-| `Docs/03-团队/Agents/交付模板/程序交付模板.md` | 程序类 agent 的交付结构 |
-| `Docs/03-团队/Agents/交付模板/设计交付模板.md` | 设计/UI/体验类 agent 的交付结构 |
-| `Docs/03-团队/Agents/交付模板/QA验收模板.md` | QA / review 类 agent 的验收结构 |
-| `Docs/03-团队/Agents/交付模板/研究分析模板.md` | 调研/研究类 agent 的分析结构 |
-
-### `.codex/`
-
-`.codex/` 是 Codex 运行配置层，给主线程和子代理系统使用。
-
-| 路径 | 作用 |
-| --- | --- |
-| `.codex/config.toml` | 本地 agent 并发和深度配置，例如 `max_threads`、`max_depth` |
-| `.codex/team-kit.toml` | 模板接入配置源，记录 `docs_root`、项目规范路径、项目进度路径、公共文件清单、staging 策略和行业包选择机制 |
-| `.codex/tools/check_template_integrity.py` | 本地体检脚本。检查模板结构、路由、公共写锁、`.DS_Store`、staging 规则和行业扩展包结构 |
-
-### `.codex/agents/`
-
-这里是默认启用的核心 agent TOML。复制到目标项目后，这些 agent 会作为核心小队候选。
-
-| 文件 | 作用 |
-| --- | --- |
-| `producer.toml` | 总目标、范围、价值和最终验收 |
-| `project-manager.toml` | 任务拆解、依赖、进度、风险和席位管理 |
-| `product-strategist.toml` | 用户目标、产品方案、场景和验收口径 |
-| `tech-architect.toml` | 架构、技术方案、风险和工程边界 |
-| `ux-designer.toml` | 信息架构、流程和界面体验 |
-| `implementation-engineer.toml` | 受控范围内的代码实现 |
-| `qa-reviewer.toml` | 测试、审查、回归风险和验收结论 |
-| `docs-keeper.toml` | 文档草稿、工作记录和团队知识沉淀 |
-| `researcher.toml` | 资料、竞品、代码映射和证据收集 |
-
-### `.codex/agent-packs/`
-
-这里是可选行业扩展包模板源。它们不会默认生效。
-
-| 路径 | 作用 |
-| --- | --- |
-| `.codex/agent-packs/README.md` | 行业扩展包通用规则 |
-| `.codex/agent-packs/game/README.md` | 游戏行业包说明 |
-| `.codex/agent-packs/game/pack.toml` | 游戏包元信息和选择项 |
-| `.codex/agent-packs/game/*.toml` | 游戏行业可选 agents。选择 `game-basic`、`game-full` 或 `custom` 后才复制到 `.codex/agents/` |
-
-### `.codex/team/`
-
-这里是团队调度协议层，给主线程和子代理派发时引用。
-
-| 文件 | 作用 |
-| --- | --- |
-| `dispatch-protocol.md` | 子代理派发协议，包含 Delegation Card、压缩上下文包、等待和关闭规则 |
-| `model-routing.md` | 不同任务类型的推荐模型和 reasoning 策略 |
-| `public-file-lock.md` | 公共文件写锁，规定哪些文件只能由主线程修改 |
-| `role-taxonomy.md` | 核心角色和行业扩展角色分类 |
-| `spawn-prompt-templates.md` | 派发子代理时可复用的 prompt 模板 |
+| 入口路由 | `AGENTS.md` |
+| 目标项目状态 | `Docs/01-项目/项目规范.md`、`Docs/01-项目/项目进度.md` |
+| 普通执行 | `Docs/02-执行/AI执行手册.md` |
+| 日常 Team | `Docs/02-执行/Team运行卡.md`，需要派发时再读 `.codex/team/dispatch-protocol.md` |
+| 团队初始化 | `Docs/03-团队/Agents/团队初始化.md`、`Docs/03-团队/行业扩展包/README.md`、`.codex/team-kit.toml` |
+| agent / 行业包调整 | `.codex/agents/`、`.codex/agent-packs/`、`.codex/team/model-routing.md`、`.codex/team/role-taxonomy.md` |
+| 本地体检 | `.codex/tools/check_template_integrity.py` |
 
 ## 团队任务必须产出什么
 
-每次走 `Team` 路由或启用任何子代理，主线程最终回复前必须确认：
+每次走 `Team` 路由并实际启用子代理，主线程最终回复前必须确认：
 
 - 本波工作记录已按模板落盘，并逐一列出参与者、产出和验证。
-- `Docs/03-团队/Agents/团队名册.md` 已按参与者更新最近任务和任务次数。
+- `Docs/03-团队/Agents/团队名册.md` 已按参与者更新团队名册，记录最近任务和任务次数。
 - 对应成员档案仅在新增可复用经验时创建或更新。
 - 所有本波子代理状态已记录为 completed/closed，或说明例外原因。
 - 最终回复说明谁干了什么、产出了什么、验证了什么、哪些建议被采纳。
 
-如果本轮没有启用子代理，也要说明原因，例如任务较小、用户未授权或关键路径更适合主线程完成。
+只读 / dry-run 且未启用子代理、未改文件时不落盘团队记录。主线程独自完成实际 Team 工作时，写 `main-thread` 工作记录并说明未派发原因。
 
 ## 本地体检
 
@@ -248,6 +218,8 @@ python3 .codex/tools/check_template_integrity.py
 
 该脚本只做本地模板结构体检，不修改文件、不联网，也不代表 OpenAI/Codex 官方规则校验。它会检查路由、链接、`.DS_Store`、行业包选择值和部分运行态文档体量预算，但不会精确测量真实 prompt token。需要确认当前官方行为时，应让 AI 先查当前 OpenAI Codex 官方文档，再更新模板。
 
+本仓库还提供 repo-local `.githooks/`。在模板维护仓库中把 `core.hooksPath` 指向 `.githooks` 后，`pre-commit` 会自动运行体检和 `git diff --check`；`pre-push` 会追加体检脚本语法编译和 `.DS_Store` 扫描。
+
 ## 维护原则
 
 - 改入口路由：优先改 `AGENTS.md` 和 `Docs/02-执行/工程结构与文档路由.md`。
@@ -256,7 +228,3 @@ python3 .codex/tools/check_template_integrity.py
 - 改行业扩展包：优先改 `.codex/agent-packs/{industry}/` 和 `Docs/03-团队/行业扩展包/README.md`。
 - 改公共写锁：同步 `.codex/team/public-file-lock.md`、`AGENTS.md`、`.codex/team/spawn-prompt-templates.md` 和相关 agent TOML。
 - 改完模板结构后，必须运行本地体检。
-
-## 当前版本不包含 hooks
-
-当前版本先用 `AGENTS.md`、TOML 指令、团队协议和本地体检脚本约束流程。后续如果要加入 hooks 或自动拦截，应作为单独版本设计，并先确认不会过度侵入目标项目。

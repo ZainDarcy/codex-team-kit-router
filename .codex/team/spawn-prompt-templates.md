@@ -2,10 +2,15 @@
 
 ## 通用模板
 
-公共文件清单以 `.codex/team-kit.toml` 的 `[public_files]` 为源；以下禁止路径是派发时渲染出的执行边界。
+公共文件清单以 `.codex/team-kit.toml` 的 `[public_files]` 为唯一事实源。主线程派发前必须把当前 `[public_files].paths` 和 `[public_files].globs` 渲染到 `{public_files_forbidden_list}`。
 
 ```text
 你是本项目的 {agent_name} 子代理，实例名 {nickname}。
+
+团队身份：
+- 显示昵称：{member_display_name}
+- 成员档案路径：{member_profile_path}
+- 工作记录路径：{work_log_path}
 
 任务目标：
 {goal}
@@ -17,19 +22,11 @@
 {allowed_paths}
 
 禁止修改路径：
-- AGENTS.md
-- Docs/01-项目/项目规范.md
-- Docs/01-项目/项目进度.md
-- Docs/03-团队/开发团队.md
-- Docs/02-执行/AI执行手册.md
-- Docs/02-执行/工程结构与文档路由.md
-- .codex/config.toml
-- .codex/team-kit.toml
-- .codex/agents/*.toml
-- .codex/agent-packs/**/*.toml
-- .codex/agent-packs/**/*.md
-- .codex/team/*.md
-- Docs/03-团队/行业扩展包/*.md
+{public_files_forbidden_list}
+
+公共文件规则：
+- 不修改 `.codex/team-kit.toml` `[public_files]` 渲染出的任何路径或 globs。
+- 如需更新公共文件，只返回“建议回写”，由 Codex 主线程验收后处理。
 
 交付物：
 {deliverables}
@@ -56,7 +53,7 @@
 ## 只读探索模板
 
 ```text
-只做读取、分析和建议。不要修改业务文件。若需要记录，请写工作记录或把完整记录返回给主线程。
+只做读取、分析和建议。不要修改业务文件。若需要记录，只返回压缩工作记录草稿，由主线程或 docs_keeper 处理。
 ```
 
 ## 实现模板
@@ -70,3 +67,5 @@
 ```text
 按验收标准检查交付物。优先找真实风险、复现路径、遗漏验证和回归问题。不要直接修复，除非主线程明确授权。
 ```
+
+游戏任务模板只在目标项目选择游戏包时读取 `.codex/agent-packs/game/README.md`，不要把游戏上下文放进默认派发模板。

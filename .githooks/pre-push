@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+.githooks/pre-commit
+# pre-commit runs git diff --check.
+
+PYTHONDONTWRITEBYTECODE=1 python3 -c "from pathlib import Path; p=Path('.codex/tools/check_template_integrity.py'); compile(p.read_text(encoding='utf-8'), str(p), 'exec'); print('[OK] no-write syntax compile passed')"
+
+ds_store_matches=$(find . -name .DS_Store -print)
+if [ -n "$ds_store_matches" ]; then
+  printf '%s\n' "[FAIL] .DS_Store files found:"
+  printf '%s\n' "$ds_store_matches"
+  exit 1
+fi
+printf '%s\n' "[OK] no .DS_Store files found"

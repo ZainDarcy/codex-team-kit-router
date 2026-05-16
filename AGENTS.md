@@ -19,28 +19,13 @@
 | `Quick` | 简单问答、小范围检查、无需改动的快速判断 | 本文件和用户点名文件 |
 | `Project` | 普通规划、实现、文档更新、局部修复 | `Docs/01-项目/项目规范.md`、`Docs/01-项目/项目进度.md`、`Docs/02-执行/AI执行手册.md` |
 | `Team` | 已初始化项目的日常团队协作、子代理、并行 agent | `Docs/02-执行/Team运行卡.md`，再按卡片追加调度文件 |
-| `Team-Init` | 团队初始化、模板接入、迁移和扩展包选择 | `Docs/03-团队/Agents/团队初始化.md`、`Docs/03-团队/行业扩展包/README.md`、`Docs/03-团队/开发团队.md`、`Docs/02-执行/AI执行手册.md`、`Docs/02-执行/工程结构与文档路由.md`、`.codex/team/dispatch-protocol.md` |
+| `Team-Init` | 团队初始化、重新初始化、模板接入、迁移和扩展包选择 | `Docs/03-团队/Agents/团队初始化.md`、`.codex/team-kit.toml`，再按初始化文档追加行业包、agents 或派发协议 |
 | `Review` | 审查、QA、安全、回归、验收 | `Docs/02-执行/AI执行手册.md`、`.codex/team/public-file-lock.md`、`Docs/03-团队/Agents/交付模板/QA验收模板.md` |
 | `Agent-Setup` | 搭建、扩展、调整团队模板或 agent 定义 | `Docs/03-团队/开发团队.md`、`Docs/02-执行/工程结构与文档路由.md`、`.codex/team/role-taxonomy.md`、`.codex/team/model-routing.md`、`.codex/team/public-file-lock.md`、`.codex/team/spawn-prompt-templates.md`、`.codex/agents/*.toml` |
-| `Template-Maintenance` | 维护本 kit 源仓库、README、体检脚本或模板发布 | `Docs/02-执行/工程结构与文档路由.md`、`.codex/team-kit.toml`、相关模板文件；不执行目标项目团队初始化 |
 
 ## 公共文件写锁
 
-公共文件清单以 `.codex/team-kit.toml` 的 `[public_files]` 为源，`.codex/team/public-file-lock.md` 和派发 prompt 只是渲染后的执行说明。以下摘要只能由 Codex 主线程修改：
-
-- `AGENTS.md`
-- `Docs/01-项目/项目规范.md`
-- `Docs/01-项目/项目进度.md`
-- `Docs/03-团队/开发团队.md`
-- `Docs/02-执行/AI执行手册.md`
-- `Docs/02-执行/工程结构与文档路由.md`
-- `.codex/config.toml`
-- `.codex/team-kit.toml`
-- `.codex/agents/*.toml`
-- `.codex/agent-packs/**/*.toml`
-- `.codex/agent-packs/**/*.md`
-- `.codex/team/*.md`
-- `Docs/03-团队/行业扩展包/*.md`
+公共文件清单以 `.codex/team-kit.toml` 的 `[public_files]` 为唯一事实源，`.codex/team/public-file-lock.md` 和派发 prompt 只是渲染后的执行说明。公共文件包括入口、项目真相源、执行/团队规则、`.codex` 配置、agent 定义、扩展包和团队协议；只能由 Codex 主线程修改。
 
 子代理如需更新公共文件，只能在结果或工作记录中提出“建议回写”，由主线程验收后决定是否采纳。
 
@@ -50,6 +35,7 @@
 - 不把主线程下一步立即需要的关键路径交给子代理。
 - 优先把探索、代码映射、审查、验证、资料整理等读重任务交给子代理。
 - 写入型子代理必须有互不重叠的允许路径和明确验收标准。
+- 派发前必须先写 Team Assignment Map，绑定每个子代理的 `agent`、显示昵称、成员档案路径和工作记录路径。
 - 派发前必须按 `.codex/team/dispatch-protocol.md` 写清 Delegation Card。
 
 ## 验证与交付

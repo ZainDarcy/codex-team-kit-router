@@ -2,11 +2,19 @@
 
 ## Workflow Context Iteration
 
+- Added tree-style and Mermaid workflow views to make routing, initialization, and Team execution easier to inspect visually.
+- Added `game-pack-v2` planning scaffolds: scenario matrix, game task dispatch templates, playtest evidence contract, and safer public-file source-of-truth guidance.
+- Slimmed README, AI execution, dispatch, and game prompt templates to reduce default context load and added local line-budget checks for key runtime docs.
+- Added Team Assignment Map as a required pre-dispatch identity gate so runtime threads bind to stable team members before spawning.
+- Added reinitialization / upgrade guidance that preserves existing member identities, history, and work logs while applying newer template rules.
+- Moved game-specific dispatch wording out of the global prompt template and into the game pack, reducing non-game context pollution.
+- Added a repo-local pre-commit hook that runs the local integrity check and whitespace diff check before template commits.
+- Added a repo-local pre-push hook with syntax compilation and `.DS_Store` checks for the final publish gate.
 - Reduced the daily `Team` route default read set to `Team运行卡.md`, with dispatch/model/public-lock docs loaded only when needed.
-- Added `Template-Maintenance` guidance so maintaining this kit source repo does not trigger target-project team initialization.
+- Kept target-project routes focused on Quick / Project / Team / Team-Init / Review / Agent-Setup; template-source maintenance belongs outside copied target placeholders.
 - Added Router-only trial wording, initialization report requirements, merge decision rules, rollback requirements, and industry-pack choice guidance.
 - Clarified read-only / dry-run exceptions so no team records are written when no subagents run and no files change.
-- Added template-local checks for initialization config, Team route slimness, Template-Maintenance routing, and public-file source wording.
+- Added template-local checks for initialization config, Team route slimness, target-placeholder cleanliness, and public-file source wording.
 
 ## Industry Packs And Staging Init
 

@@ -22,14 +22,17 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / ".codex/team-kit.toml"
 
-ROUTES = ["Quick", "Project", "Team", "Team-Init", "Review", "Agent-Setup", "Template-Maintenance"]
+ROUTES = ["Quick", "Project", "Team", "Team-Init", "Review", "Agent-Setup"]
 
 DISPATCH_PHRASES = [
     "Delegation Card",
+    "Team Assignment Map",
+    "运行时线程 / 系统 nickname",
     "压缩上下文包",
     "用户是否明确授权子代理",
     "主线程保留的关键路径",
     "所有本波子代理状态",
+    "不超过 6 个文件引用、12 条证据要点和 4000 字",
 ]
 
 WRITING_AGENTS = {
@@ -59,17 +62,52 @@ LOCAL_AGENT_REQUIRED_FIELDS = [
     "developer_instructions",
 ]
 
-PUBLIC_LOCK_PHRASES = [
+PUBLIC_AGENT_PHRASES = [
     "Do not modify public files",
-    "Docs/01-项目/项目进度.md",
-    "Docs/02-执行/AI执行手册.md",
-    "Docs/02-执行/工程结构与文档路由.md",
-    ".codex/agents/*.toml",
-    ".codex/agent-packs/**/*.toml",
-    ".codex/agent-packs/**/*.md",
-    "Docs/03-团队/行业扩展包/*.md",
+    ".codex/team-kit.toml [public_files]",
+    "source of truth",
     "Do not spawn subagents",
     "Docs/03-团队/Agents/工作记录",
+]
+
+PUBLIC_LOCK_DOC_PHRASES = [
+    "唯一事实源",
+    ".codex/team-kit.toml",
+    "[public_files]",
+    "渲染",
+]
+
+PROMPT_TEMPLATE_PHRASES = [
+    "{public_files_forbidden_list}",
+    "{member_display_name}",
+    "{member_profile_path}",
+    "{work_log_path}",
+    "[public_files].paths",
+    "[public_files].globs",
+    "建议回写",
+]
+
+GAME_README_PHRASES = [
+    "任务场景矩阵",
+    "早期玩法原型",
+    "UI/HUD 改造",
+    "Unity/Cocos 引擎迁移评估",
+    "LLM NPC",
+    "派发模板索引",
+    "数值平衡派发模板",
+    "浏览器试玩验收模板",
+    "试玩验收契约",
+]
+
+PLAYTEST_CONTRACT_PHRASES = [
+    "launch result",
+    "playable URL",
+    "core loop judgment",
+    "input feedback",
+    "HUD blocks the play area",
+    "failure/win/results feedback",
+    "screenshot or browser-check evidence",
+    "uncovered devices/browsers",
 ]
 
 WORK_LOG_HEADINGS = [
@@ -94,6 +132,17 @@ CHOICE_KEY_DOCS = [
     "Docs/02-执行/AI执行手册.md",
     "Docs/03-团队/开发团队.md",
     "Docs/03-团队/行业扩展包/README.md",
+]
+
+PROJECT_PROGRESS_FORBIDDEN_PHRASES = [
+    "模板维护状态",
+    "Router 基础版",
+    "Staging 接入",
+    "Team 轻量化",
+    "game-pack-v2",
+    "公共写锁事实源",
+    "2026-05-15",
+    "2026-05-16",
 ]
 
 
@@ -207,6 +256,10 @@ def check_initialization_config() -> None:
         cfg_path(key)
     if cfg("initialization", "state") != "template-source":
         fail(".codex/team-kit.toml [initialization].state must be template-source in the template repo")
+    if cfg("initialization", "install_mode") != "template-source":
+        fail(".codex/team-kit.toml [initialization].install_mode must be template-source in the template repo")
+    if cfg("initialization", "template_version_applied") != "":
+        fail(".codex/team-kit.toml [initialization].template_version_applied must be blank in the template repo")
     if cfg("initialization", "team_ready_required_for_team_route") is not True:
         fail(".codex/team-kit.toml must require team-ready state before Team route")
     if cfg("initialization", "status_file") != cfg_path("team_roster"):
@@ -218,6 +271,8 @@ def required_paths() -> list[str]:
         "AGENTS.md",
         "README.md",
         "Docs/README.md",
+        ".githooks/pre-commit",
+        ".githooks/pre-push",
         ".codex/config.toml",
         ".codex/team-kit.toml",
         ".codex/tools/check_template_integrity.py",
@@ -267,6 +322,33 @@ def check_required_paths() -> None:
     missing = [path for path in required_paths() if not (ROOT / path).exists()]
     if missing:
         fail("Missing required paths: " + ", ".join(missing))
+
+
+def check_target_project_placeholders() -> None:
+    progress_path = ROOT / cfg_path("project_progress")
+    progress = progress_path.read_text(encoding="utf-8")
+    for phrase in ["目标项目", "待填写", "不记录本模板源仓库的维护历史"]:
+        if phrase not in progress:
+            fail(f"{cfg_path('project_progress')} must stay a target-project placeholder; missing phrase: {phrase}")
+    for phrase in PROJECT_PROGRESS_FORBIDDEN_PHRASES:
+        if phrase in progress:
+            fail(f"{cfg_path('project_progress')} must not contain template-source progress phrase: {phrase}")
+
+    roster = (ROOT / cfg_path("team_roster")).read_text(encoding="utf-8")
+    if "状态：pending" not in roster or "待随机生成" not in roster:
+        fail(f"{cfg_path('team_roster')} must stay pending in the template")
+    for nickname in ["林知远", "周明衡", "陈思远", "赵明轩", "何子涵", "沈清和", "陆景然"]:
+        if nickname in roster:
+            fail(f"{cfg_path('team_roster')} must not contain real source-project member: {nickname}")
+
+    member_dir = ROOT / "Docs/03-团队/Agents/成员档案"
+    work_log_dir = ROOT / "Docs/03-团队/Agents/工作记录"
+    member_files = sorted(path.name for path in member_dir.glob("*.md"))
+    work_log_files = sorted(path.name for path in work_log_dir.glob("*.md"))
+    if member_files != ["_成员档案模板.md"]:
+        fail("Template must not ship initialized member profiles: " + ", ".join(member_files))
+    if work_log_files != ["_工作记录模板.md"]:
+        fail("Template must not ship real work logs: " + ", ".join(work_log_files))
 
 
 def check_docs_root_case() -> None:
@@ -392,9 +474,19 @@ def check_agents_md_router() -> None:
         fail("AGENTS.md Team route must point to the Team run card")
     if cfg_path("team_init") not in text:
         fail("AGENTS.md Team-Init route must point to the team initialization doc")
+    team_init_line = next((line for line in text.splitlines() if line.startswith("| `Team-Init` |")), "")
+    if ".codex/team-kit.toml" not in team_init_line:
+        fail("AGENTS.md Team-Init route must include .codex/team-kit.toml")
+    if ".codex/team/dispatch-protocol.md" in team_init_line:
+        fail("AGENTS.md Team-Init route should not load dispatch protocol by default")
     old_forced_load = "开始任何需求、实现、调研、评审或文档更新前"
     if old_forced_load in text:
         fail("AGENTS.md still contains the old forced full-context load rule")
+    public_lock_section = re.search(r"## 公共文件写锁\n(.*?)\n## ", text, re.DOTALL)
+    if public_lock_section:
+        for mirror in [".codex/agent-packs/**/*.toml", ".codex/agents/*.toml", "Docs/01-项目/项目规范.md"]:
+            if mirror in public_lock_section.group(1):
+                fail("AGENTS.md public-lock section should summarize public files instead of mirroring full paths")
 
 
 def check_config() -> None:
@@ -407,16 +499,71 @@ def check_config() -> None:
         fail(".codex/config.toml missing local template default max_depth = 1")
 
 
+def check_local_hooks() -> None:
+    pre_commit = (ROOT / ".githooks/pre-commit").read_text(encoding="utf-8")
+    for phrase in ["check_template_integrity.py", "git diff --check"]:
+        if phrase not in pre_commit:
+            fail(f".githooks/pre-commit missing hook command: {phrase}")
+
+    pre_push = (ROOT / ".githooks/pre-push").read_text(encoding="utf-8")
+    for phrase in ["check_template_integrity.py", "git diff --check", "PYTHONDONTWRITEBYTECODE", ".DS_Store"]:
+        if phrase not in pre_push:
+            fail(f".githooks/pre-push missing hook command: {phrase}")
+    for hook_path in [ROOT / ".githooks/pre-commit", ROOT / ".githooks/pre-push"]:
+        if not os.access(hook_path, os.X_OK):
+            fail(f"{hook_path.relative_to(ROOT)} must be executable")
+
+
+def check_no_stale_context_rules() -> None:
+    stale_phrases = {
+        "README.md": ["需要派发：Delegation Card ->"],
+        cfg_path("execution_manual"): ["走 `Team` 路由或启用子代理时，必须确认至少一份工作记录"],
+        cfg_path("team_doc"): ["Team 任务结束后，在", "走 `Team` 路由或启用子代理时，执行 Team-lite"],
+        cfg_path("team_roster"): ["每次走 `Team` 路由或启用任何子代理后"],
+        ".codex/team/role-taxonomy.md": ["新角色必须写工作记录"],
+        ".codex/team/dispatch-protocol.md": ["不把“写工作记录”当成可选项"],
+    }
+    for path, phrases in stale_phrases.items():
+        text = (ROOT / path).read_text(encoding="utf-8")
+        for phrase in phrases:
+            if phrase in text:
+                fail(f"{path} still contains stale context/team rule: {phrase}")
+
+
+def check_team_assignment_map_shape() -> None:
+    dispatch = (ROOT / ".codex/team/dispatch-protocol.md").read_text(encoding="utf-8")
+    for phrase in ["check_template_integrity.py", "git diff --check"]:
+        if phrase not in (ROOT / ".githooks/pre-commit").read_text(encoding="utf-8"):
+            fail(f".githooks/pre-commit missing hook command: {phrase}")
+    assignment_match = re.search(r"## Team Assignment Map\n(.*?)## Delegation Card", dispatch, re.DOTALL)
+    if not assignment_match:
+        fail(".codex/team/dispatch-protocol.md missing Team Assignment Map block before Delegation Card")
+    for phrase in ["agent", "显示昵称", "运行时线程 / 系统 nickname", "成员档案路径", "工作记录路径", "sandbox / 写入权限"]:
+        if phrase not in assignment_match.group(1):
+            fail(f"Team Assignment Map missing field: {phrase}")
+
+
 def check_public_lock_source() -> None:
     lock_doc = (ROOT / ".codex/team/public-file-lock.md").read_text(encoding="utf-8")
     prompt_template = (ROOT / ".codex/team/spawn-prompt-templates.md").read_text(encoding="utf-8")
-    if ".codex/team-kit.toml" not in lock_doc or "[public_files]" not in lock_doc:
-        fail(".codex/team/public-file-lock.md must state that team-kit.toml [public_files] is the source")
-    for path in configured_public_files():
-        if path not in lock_doc:
-            fail(f".codex/team/public-file-lock.md missing public file: {path}")
-        if path not in prompt_template:
-            fail(f".codex/team/spawn-prompt-templates.md missing forbidden path: {path}")
+    public_entries = configured_public_files()
+    if not public_entries:
+        fail(".codex/team-kit.toml [public_files] must not be empty")
+    for public_path in CONFIG.get("public_files", {}).get("paths", []):
+        if not (ROOT / public_path).exists():
+            fail(f".codex/team-kit.toml public file path does not exist: {public_path}")
+    for public_glob in CONFIG.get("public_files", {}).get("globs", []):
+        if not list(ROOT.glob(public_glob)):
+            fail(f".codex/team-kit.toml public file glob matches nothing: {public_glob}")
+    for phrase in PUBLIC_LOCK_DOC_PHRASES:
+        if phrase not in lock_doc:
+            fail(f".codex/team/public-file-lock.md missing source-of-truth phrase: {phrase}")
+    for phrase in PROMPT_TEMPLATE_PHRASES:
+        if phrase not in prompt_template:
+            fail(f".codex/team/spawn-prompt-templates.md missing rendered public-file phrase: {phrase}")
+    for old_mirror_path in ["Docs/01-项目/项目规范.md", ".codex/agent-packs/**/*.toml"]:
+        if old_mirror_path in lock_doc:
+            fail(".codex/team/public-file-lock.md should not mirror full public-file paths; use [public_files]")
 
 
 def read_toml_string(text: str, field: str) -> str | None:
@@ -481,7 +628,7 @@ def check_agent_file(agent_file: Path) -> None:
     instructions = read_toml_string(text, "developer_instructions")
     if not instructions:
         fail(f"{agent_file.relative_to(ROOT)} has invalid developer_instructions")
-    for phrase in PUBLIC_LOCK_PHRASES:
+    for phrase in PUBLIC_AGENT_PHRASES:
         if phrase not in instructions:
             fail(f"{agent_file.relative_to(ROOT)} missing lock phrase: {phrase}")
 
@@ -529,6 +676,26 @@ def check_industry_packs() -> None:
     for phrase in ["none", "game-basic", "game-full", "custom", "策划", "程序", "美术", "数值"]:
         if phrase not in pack_doc:
             fail(f"Docs/03-团队/行业扩展包/README.md missing phrase: {phrase}")
+    for phrase in ["Unity/Cocos", "试玩验收", "可试玩 URL", "未覆盖设备和浏览器"]:
+        if phrase not in pack_doc:
+            fail(f"Docs/03-团队/行业扩展包/README.md missing game-pack-v2 phrase: {phrase}")
+
+    game_readme = (game_dir / "README.md").read_text(encoding="utf-8")
+    for phrase in GAME_README_PHRASES:
+        if phrase not in game_readme:
+            fail(f".codex/agent-packs/game/README.md missing game-pack-v2 phrase: {phrase}")
+
+    playtest = (game_dir / "playtest-researcher.toml").read_text(encoding="utf-8")
+    for phrase in PLAYTEST_CONTRACT_PHRASES:
+        if phrase not in playtest:
+            fail(f".codex/agent-packs/game/playtest-researcher.toml missing playtest contract phrase: {phrase}")
+
+    prompt_template = (ROOT / ".codex/team/spawn-prompt-templates.md").read_text(encoding="utf-8")
+    for phrase in ["玩法原型派发模板", "UI/HUD 派发模板", "浏览器试玩验收模板", "Unity/Cocos 引擎迁移评估模板"]:
+        if phrase in prompt_template:
+            fail(f".codex/team/spawn-prompt-templates.md should not carry game-specific dispatch template: {phrase}")
+        if phrase not in game_readme:
+            fail(f".codex/agent-packs/game/README.md missing game dispatch template: {phrase}")
 
 
 def check_work_log_template() -> None:
@@ -540,7 +707,7 @@ def check_work_log_template() -> None:
 
 def check_team_docs() -> None:
     team_doc = (ROOT / cfg_path("team_doc")).read_text(encoding="utf-8")
-    for phrase in ["等待本波全部完成", "关闭完成的子代理线程", "公共文件只由 Codex 主线程修改", "按参与者更新最近任务和任务次数"]:
+    for phrase in ["等待本波全部完成", "关闭完成的子代理线程", "公共文件只由 Codex 主线程修改", "按参与者更新最近任务和任务次数", "Team Assignment Map"]:
         if phrase not in team_doc:
             fail(f"{cfg_path('team_doc')} missing phrase: {phrase}")
 
@@ -555,13 +722,16 @@ def check_team_docs() -> None:
         "真相源策略",
         "staging",
         "行业扩展包",
+        "install_mode",
+        "重新初始化",
+        "Team Assignment Map",
         "按参与者更新最近任务和任务次数",
     ]:
         if phrase not in ai_manual:
             fail(f"{cfg_path('execution_manual')} missing phrase: {phrase}")
 
     run_card = (ROOT / cfg_path("team_run_card")).read_text(encoding="utf-8")
-    for phrase in ["已初始化项目", "默认不读取", "Team-Init", "按参与者更新最近任务和任务次数", "只读 / dry-run"]:
+    for phrase in ["已初始化项目", "默认不读取", "Team-Init", "Team Assignment Map", "按参与者更新最近任务和任务次数", "只读 / dry-run"]:
         if phrase not in run_card:
             fail(f"{cfg_path('team_run_card')} missing phrase: {phrase}")
 
@@ -579,9 +749,6 @@ def check_team_docs() -> None:
         fail(f"{cfg_path('routing_doc')} Team route must include Team run card")
     if cfg_path("team_init") not in routing_doc:
         fail(f"{cfg_path('routing_doc')} Team-Init route must include team initialization")
-    if "不执行目标项目团队初始化" not in routing_doc:
-        fail(f"{cfg_path('routing_doc')} missing Template-Maintenance source-repo boundary")
-
     init_doc = (ROOT / cfg_path("team_init")).read_text(encoding="utf-8")
     for phrase in [
         "GitHub 地址",
@@ -597,6 +764,12 @@ def check_team_docs() -> None:
         "已有文件合并决策表",
         "初始化完成报告模板",
         "rollback",
+        "初始化演练检查点",
+        "公共文件清单",
+        "AGENTS.md` / `AGENT.md` 决策",
+        "重新初始化 / 升级接入",
+        "保留已有显示昵称",
+        "未选择的扩展包源码默认不复制进目标项目",
     ]:
         if phrase not in init_doc:
             fail(f"{cfg_path('team_init')} missing phrase: {phrase}")
@@ -640,12 +813,15 @@ def check_readme_routes() -> None:
     for route in ROUTES:
         if f"`{route}`" not in readme:
             fail(f"README.md missing route: {route}")
+        if f'{route}"]' not in readme and route in {"Quick", "Project", "Team", "Team-Init", "Review", "Agent-Setup"}:
+            fail(f"README.md workflow diagram missing route node: {route}")
     team_route_line = next((line for line in readme.splitlines() if line.startswith("| `Team` |")), "")
     if "团队初始化" in team_route_line or "行业扩展包" in team_route_line:
         fail("README.md Team route must not tell users to load initialization or industry-pack docs")
     for phrase in [
         "30 秒接入",
         "Team 运行卡",
+        "Team Assignment Map -> Delegation Card",
         "团队初始化",
         "按参与者更新团队名册",
         "新增可复用经验",
@@ -658,17 +834,34 @@ def check_readme_routes() -> None:
 
 def check_runtime_context_budget() -> None:
     budgets = {
+        "README.md": int(cfg("checks", "max_readme_lines", 240)),
+        cfg_path("execution_manual"): int(cfg("checks", "max_ai_manual_lines", 140)),
         cfg_path("team_run_card"): int(cfg("checks", "max_team_run_card_lines", 80)),
+        cfg_path("routing_doc"): int(cfg("checks", "max_routing_doc_lines", 180)),
+        cfg_path("team_doc"): int(cfg("checks", "max_team_doc_lines", 180)),
+        ".codex/team/public-file-lock.md": int(cfg("checks", "max_public_file_lock_lines", 80)),
+        cfg_path("team_init"): int(cfg("checks", "max_team_init_lines", 220)),
         ".codex/team/dispatch-protocol.md": int(cfg("checks", "max_dispatch_protocol_lines", 180)),
+        ".codex/team/spawn-prompt-templates.md": int(cfg("checks", "max_spawn_prompt_templates_lines", 120)),
     }
     for path, max_lines in budgets.items():
         line_count = len((ROOT / path).read_text(encoding="utf-8").splitlines())
         if line_count > max_lines:
             fail(f"{path} exceeds local runtime context budget: {line_count} > {max_lines} lines")
+    dispatch = (ROOT / ".codex/team/dispatch-protocol.md").read_text(encoding="utf-8")
+    if "团队记忆" in dispatch:
+        fail(".codex/team/dispatch-protocol.md must not use obsolete team memory wording")
+    prompt_template = (ROOT / ".codex/team/spawn-prompt-templates.md").read_text(encoding="utf-8")
+    readonly_match = re.search(r"## 只读探索模板\n(.*?)\n## ", prompt_template, re.DOTALL)
+    if not readonly_match:
+        fail(".codex/team/spawn-prompt-templates.md missing read-only exploration template section")
+    if "写工作记录" in readonly_match.group(1):
+        fail("Read-only exploration template must return a work-log draft instead of writing a work log")
 
 
 def main() -> None:
     check_required_paths()
+    check_target_project_placeholders()
     check_docs_root_case()
     check_initialization_config()
     check_truth_sources()
@@ -678,6 +871,9 @@ def main() -> None:
     check_markdown_links()
     check_agents_md_router()
     check_config()
+    check_local_hooks()
+    check_no_stale_context_rules()
+    check_team_assignment_map_shape()
     check_public_lock_source()
     check_agents()
     check_industry_packs()
